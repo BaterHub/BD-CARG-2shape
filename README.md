@@ -1,4 +1,4 @@
-# CARG Data Conversion Tool
+# CARG Data Conversion Tool - gpkg to shape
 
 **Versione**: 1.0  
 **Autore**: Patrizio Petricca (patrizio.petricca@isprambiente.it)
