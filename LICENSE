@@ -1,6 +1,6 @@
 MIT License
 
-Copyright (c) 2025 Patrizio Petricca
+Copyright (c) 2024 ISPRA - Istituto Superiore per la Protezione e la Ricerca Ambientale
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -19,3 +19,30 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+---
+
+## Note aggiuntive
+
+Questo software è sviluppato nell'ambito del progetto CARG (Carta Geologica d'Italia) 
+per la conversione e standardizzazione di dati geologici.
+
+### Disclaimer
+- Il software è fornito "così com'è" senza garanzie di alcun tipo
+- Gli autori non sono responsabili per eventuali danni derivanti dall'uso del software  
+- È responsabilità dell'utente verificare la correttezza dei risultati prodotti
+- L'uso del software implica l'accettazione di questi termini
+
+### Attribuzione
+Se utilizzi questo software in pubblicazioni scientifiche o progetti, sei invitato a citare:
+
+```
+CARG Data Conversion Tool v1.0
+Sviluppato da Patrizio Petricca - ISPRA
+https://github.com/[repository-url]
+```
+
+### Supporto
+Il supporto è fornito su base volontaria tramite:
+- Issues GitHub per bug e richieste di funzionalità
+- Documentazione presente nel repository
