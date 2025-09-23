@@ -3,21 +3,31 @@
 **Versione**: 1.0  
 **Autore**: Patrizio Petricca (patrizio.petricca@isprambiente.it)
 
-Un tool Python per ArcGIS che converte dati geologici da GeoPackage codificati CARG in shapefile standardizzati.
+Tools Python per ArcGIS/ArcMap che convertono dati geologici da GeoPackage o geoDB codificati CARG in shapefile standardizzati.
 
 ```
-   /\                                       /\  
-  /  \         BDgpkg2shape v1.0           /  \  
- /____\ patrizio.petricca@isprambiente.it /____\  
+                ████████████████████████
+                ████  ████  ████  ████  
+                ████  ████  ████  ████  
+    ██████╗ █████╗ ██████╗  ██████╗ 
+   ██╔════╝██╔══██╗██╔══██╗██╔════╝ 
+   ██║     ███████║██████╔╝██║  ███╗        BDgpkg2shape
+   ██║     ██╔══██║██╔══██╗██║   ██║        BDgeoDB2shape
+   ╚██████╗██║  ██║██║  ██║╚██████╔╝
+    ╚═════╝╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝ 
+                ████  ████  ████  ████  
+                ████████████████████████
+
+                patrizio.petricca@isprambiente.it   
 ```
 
 ## Descrizione
 
-Questo script converte i dati geologici dal formato GeoPackage codificato CARG (Carta Geologica d'Italia) in shapefile standardizzati, applicando le mappature dei domini e la standardizzazione dei campi secondo le specifiche CARG.
+Questi script convertono i dati geologici dal formato GeoPackage o geoDB codificato CARG (Carta Geologica d'Italia) in shapefile standardizzati, applicando le mappature dei domini e la standardizzazione dei campi secondo le specifiche CARG.
 
 ## Caratteristiche principali
 
-- ✅ Conversione automatica da GeoPackage CARG a shapefile
+- ✅ Conversione automatica da GeoPackage/GeoDB CARG a shapefile
 - ✅ Mappatura dei domini da tabelle ausiliarie
 - ✅ Standardizzazione dei nomi dei campi e ordine
 - ✅ Gestione ottimizzata delle codifiche UTF-8
@@ -36,7 +46,7 @@ Questo script converte i dati geologici dal formato GeoPackage codificato CARG (
 ### Struttura dati di input
 ```
 workspace/
-├── input.gpkg                 # GeoPackage CARG di input
+├── input.gpkg/input.gdb       # GeoPackage o GeoDB CARG di input
 └── domini/                    # Cartella con tabelle dei domini (.dbf)
     ├── d_10_tipo.dbf
     ├── d_11_tipo.dbf
@@ -78,19 +88,21 @@ Il tool processa automaticamente i seguenti layer CARG:
 ### Come Script ArcGIS
 1. Apri ArcGIS Desktop
 2. Vai su **Geoprocessing** → **ArcToolbox**
-3. Aggiungi lo script come tool personalizzato
+3. Aggiungi lo script come tool personalizzato (BDgpkg2shape.py per input.gpkg; BDgeoDB2shape.py per input.gdb)
 4. Imposta il parametro:
-   - **Input GeoPackage**: percorso del file .gpkg CARG
+   - **Input GeoPackage** oppure **Input GeoDB**: percorso del file .gpkg o .gdb CARG
 
 ### Da Command Line
 ```python
 import arcpy
 import sys
 sys.path.append('path/to/script/directory')
-from BDgpkg2shape import main
+from BDgpkg2shape import main  ## per .gpkg
+from BDgeoDB2shape import main  ## per .gdb
 
 # Imposta il parametro
-arcpy.SetParameterAsText(0, r"C:\path\to\your\data.gpkg")
+arcpy.SetParameterAsText(0, r"C:\path\to\your\data.gpkg")  ## per .gpkg
+arcpy.SetParameterAsText(0, r"C:\path\to\your\data.gdb")   ## per .gdb
 
 # Esegui
 main()
@@ -98,10 +110,12 @@ main()
 
 ### Come Modulo Python
 ```python
-from BDgpkg2shape import CARGProcessor
+from BDgpkg2shape import CARGProcessor   ## per .gpkg
+from BDgeoDB2shape import CARGProcessor  ## per .gdb
 
 # Crea il processore
-processor = CARGProcessor(r"C:\path\to\your\data.gpkg")
+processor = CARGProcessor(r"C:\path\to\your\data.gpkg")  ## per .gpkg
+processor = CARGProcessor(r"C:\path\to\your\data.gdb")   ## per .gdb
 
 # Esegui la conversione
 processor.process_all_optimized()
