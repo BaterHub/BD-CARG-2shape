@@ -6,12 +6,6 @@
 Un tool Python per ArcGIS che converte dati geologici da GeoPackage codificati CARG in shapefile standardizzati.
 
 ```
-                ██████╗ ██████╗ 
-                ██╔══██╗██╔══██╗
-                ██████╔╝██████╔╝
-                ██╔═══╝ ██╔═══╝ 
-                ██║     ██║     
-                ╚═╝     ╚═╝     
    /\                                       /\  
   /  \         BDgpkg2shape v1.0           /  \  
  /____\ patrizio.petricca@isprambiente.it /____\  
