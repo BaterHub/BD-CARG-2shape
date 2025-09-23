@@ -6,19 +6,19 @@
 Tools Python per ArcGIS/ArcMap che convertono dati geologici da GeoPackage o geoDB codificati CARG in shapefile standardizzati.
 
 ```
-                ████████████████████████
-                ████  ████  ████  ████  
-                ████  ████  ████  ████  
+        ████████████████████████
+        ████  ████  ████  ████  
+        ████  ████  ████  ████  
     ██████╗ █████╗ ██████╗  ██████╗ 
    ██╔════╝██╔══██╗██╔══██╗██╔════╝ 
-   ██║     ███████║██████╔╝██║  ███╗        BDgpkg2shape
-   ██║     ██╔══██║██╔══██╗██║   ██║        BDgeoDB2shape
+   ██║     ███████║██████╔╝██║  ███╗   BDgpkg2shape
+   ██║     ██╔══██║██╔══██╗██║   ██║   BDgeoDB2shape
    ╚██████╗██║  ██║██║  ██║╚██████╔╝
     ╚═════╝╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝ 
-                ████  ████  ████  ████  
-                ████████████████████████
+        ████  ████  ████  ████  
+        ████████████████████████
 
-                patrizio.petricca@isprambiente.it   
+        patrizio.petricca@isprambiente.it   
 ```
 
 ## Descrizione
