@@ -228,7 +228,6 @@ Per dataset di grandi dimensioni:
 ## Contributori
 
 - **Patrizio Petricca** - Sviluppo iniziale e manutenzione
-- ISPRA (Istituto Superiore per la Protezione e la Ricerca Ambientale)
 
 ## Licenza
 
