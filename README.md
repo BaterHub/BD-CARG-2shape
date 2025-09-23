@@ -1,7 +1,7 @@
-# CARG Data Conversion Tool - gpkg to shape
+# CARG Data Conversion Tools - gpkg or geoDB to shape
 
 **Versione**: 1.0  
-**Autore**: Patrizio Petricca (patrizio.petricca@isprambiente.it)
+**Author**: Patrizio Petricca (patrizio.petricca@isprambiente.it)
 
 Tools Python per ArcGIS/ArcMap che convertono dati geologici da GeoPackage o geoDB codificati CARG in shapefile standardizzati.
 
@@ -18,7 +18,6 @@ Tools Python per ArcGIS/ArcMap che convertono dati geologici da GeoPackage o geo
         ████  ████  ████  ████  
         ████████████████████████
 
-        patrizio.petricca@isprambiente.it   
 ```
 
 ## Descrizione
