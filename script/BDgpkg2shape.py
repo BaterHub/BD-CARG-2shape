@@ -4,16 +4,15 @@ from __future__ import print_function
 CARG Data Conversion Script
 Converts geological data from CARG coded GeoPackage to shapefiles
 
-                ██████╗ ██████╗ 
-                ██╔══██╗██╔══██╗
-                ██████╔╝██████╔╝
-                ██╔═══╝ ██╔═══╝ 
-                ██║     ██║     
-                ╚═╝     ╚═╝     
-   /\                                       /\  
-  /  \         BDgpkg2shape v1.0           /  \  
- /____\ patrizio.petricca@isprambiente.it /____\  
-
+   ██████╗ ██████╗ 
+   ██╔══██╗██╔══██╗
+   ██████╔╝██████╔╝
+   ██╔═══╝ ██╔═══╝ 
+   ██║     ██║     
+   ╚═╝     ╚═╝     
+ 
+ BDgpkg2shape v1.0
+ 
 """
 
 import arcpy
