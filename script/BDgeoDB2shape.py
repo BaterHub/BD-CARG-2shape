@@ -293,13 +293,13 @@ class CARGProcessor:
                 "fields": [
                     {"old": "UQ_CAR", "new": "Tipo_UQ"},
                     {"old": "UQ_CAR", "new": "Stato_UQ"},
-                    {"old": "UC_LEGE", "new": "ETA_super"},
-                    {"old": "UC_LEGE", "new": "ETA_infer"},
-                    {"old": "UC_LEGE", "new": "tipo_ug"},
+                    {"old": "UC_LEGE", "new": "ETA_Super"},
+                    {"old": "UC_LEGE", "new": "ETA_Infer"},
+                    {"old": "UC_LEGE", "new": "Tipo_UG"},
                     {"old": "ID_TESS", "new": "Tessitura"},
                     {"old": "SOMMERSO", "new": "Sommerso_"},
                     {"old": "UC_LEGE", "new": "Sigla1"},
-                    {"old": "UC_LEGE", "new": "Sigla_ug"},
+                    {"old": "UC_LEGE", "new": "Sigla_UG"},
                     {"old": "UC_LEGE", "new": "Nome"},
                     {"old": "UC_LEGE", "new": "Legenda"},
                     {"old": "Pol_Uc", "new": "Pol_Uc"},
@@ -310,7 +310,7 @@ class CARGProcessor:
                 "output_name": "geologia_poligoni.shp",
                 "special_processing": "geology_polygons",
                 "keep_fields": ["Pol_Uc", "Uc_Lege", "Foglio", "Direzione", "Tipo_UQ", "Stato_UQ", 
-                              "ETA_super", "ETA_infer", "tipo_ug", "Tessitura", "Sigla1", "Sigla_ug", 
+                              "ETA_Super", "ETA_Infer", "Tipo_UG", "Tessitura", "Sigla1", "Sigla_UG", 
                               "Nome", "Legenda", "Sommerso_"]
             },
             "ST019Point": {
@@ -1038,36 +1038,36 @@ class CARGProcessor:
         return True
 
     def process_sommerso_field_optimized(self, output_shapefile_ETRF):
-        """Processing ottimizzato del campo SOMMERSO con gestione robusta"""
+        """Processing SOMMERSO field"""
         arcpy.AddMessage("Processing SOMMERSO field with enhanced logic...")
         
         try:
-            # Ottieni tutti i campi esistenti
+            # Get all fields
             existing_fields = {f.name.upper(): f.name for f in arcpy.ListFields(output_shapefile_ETRF)}
             arcpy.AddMessage("Campi disponibili: {}".format(list(existing_fields.keys())))
             
-            # Cerca il campo SOMMERSO (case-insensitive)
+            # Get SOMMERSO field (case-insensitive)
             sommerso_field = None
             for field_key, field_name in existing_fields.items():
                 if "SOMMERSO" in field_key and "SOMMERSO_" not in field_key:
                     sommerso_field = field_name
-                    arcpy.AddMessage("Trovato campo SOMMERSO: {}".format(sommerso_field))
+                    arcpy.AddMessage("found SOMMERSO: {}".format(sommerso_field))
                     break
             
             if not sommerso_field:
-                arcpy.AddWarning("Campo SOMMERSO non trovato tra i campi disponibili")
-                # Aggiungi campo vuoto
+                arcpy.AddWarning("SOMMERSO nnot found within available fields")
+                # Add empty field
                 if "SOMMERSO_" not in existing_fields:
                     arcpy.AddField_management(output_shapefile_ETRF, "Sommerso_", "TEXT", field_length=10)
-                    arcpy.AddMessage("Creato campo Sommerso_ vuoto")
+                    arcpy.AddMessage("Empty Sommerso_ field created")
                 return
             
-            # Aggiungi campo Sommerso_ se non esiste
+            # Add Sommerso_ if not exist
             if "SOMMERSO_" not in existing_fields:
                 arcpy.AddField_management(output_shapefile_ETRF, "Sommerso_", "TEXT", field_length=10)
-                arcpy.AddMessage("Creato campo Sommerso_")
+                arcpy.AddMessage("Sommerso_ field created")
             
-            # Processa i valori con logging dettagliato
+            # Processing of values
             stats = {"si": 0, "no": 0, "altro": 0, "null": 0}
             
             with arcpy.da.UpdateCursor(output_shapefile_ETRF, [sommerso_field, "Sommerso_"]) as cursor:
@@ -1078,10 +1078,10 @@ class CARGProcessor:
                         new_val = ""
                         stats["null"] += 1
                     else:
-                        # Converti a stringa e pulisci
+                        # Convert to string
                         str_val = str(sommerso_val).strip()
                         
-                        # Gestisci diversi formati
+                        # Read
                         if str_val in ["1", "1.0", "SI", "si", "S", "s"]:
                             new_val = "SI"
                             stats["si"] += 1
@@ -1089,29 +1089,29 @@ class CARGProcessor:
                             new_val = "NO" 
                             stats["no"] += 1
                         else:
-                            new_val = ""  # Valore non riconosciuto
+                            new_val = ""
                             stats["altro"] += 1
-                            if i < 5:  # Log solo i primi valori problematici
-                                arcpy.AddMessage("Valore SOMMERSO non riconosciuto: '{}' (tipo: {})".format(
+                            if i < 5:  # Log of few problematic values
+                                arcpy.AddMessage("SOMMERSO field type not recognized: '{}' (type: {})".format(
                                     str_val, type(sommerso_val).__name__))
                     
                     cursor.updateRow([sommerso_val, new_val])
                     
                     # Progress reporting
                     if (i + 1) % 1000 == 0:
-                        arcpy.AddMessage("Processati {} record...".format(i + 1))
+                        arcpy.AddMessage("Processed {} records...".format(i + 1))
             
             # Report statistiche
-            arcpy.AddMessage("Risultati conversione SOMMERSO:")
+            arcpy.AddMessage("Results of conversion for SOMMERSO:")
             arcpy.AddMessage("  SI: {}".format(stats["si"]))
             arcpy.AddMessage("  NO: {}".format(stats["no"]))
             arcpy.AddMessage("  Altro/NR: {}".format(stats["altro"]))
             arcpy.AddMessage("  Nulli: {}".format(stats["null"]))
             
-            arcpy.AddMessage("✓ Campo SOMMERSO processato correttamente")
+            arcpy.AddMessage("✓ SOMMERSO field processed")
             
         except Exception as e:
-            arcpy.AddError("X Errore nel processing del campo SOMMERSO: {}".format(str(e)))
+            arcpy.AddError("X Error in processing SOMMERSO field: {}".format(str(e)))
             import traceback
             arcpy.AddError(traceback.format_exc())
 
@@ -1438,10 +1438,10 @@ class CARGProcessor:
 
     def _add_geology_fields_comprehensive(self, shapefile):
         """
-        Aggiunge tutti i campi necessari per geology polygons in modo completo
+        Add all necessary fields
         """
         fields_to_add = {
-            # Campi principali
+            # Main fields
             "Tipo_UQ": ("TEXT", 255),
             "TempTIPO": ("TEXT", 50), 
             "Stato_UQ": ("TEXT", 255),
@@ -1456,7 +1456,7 @@ class CARGProcessor:
             "TempTESS": ("TEXT", 50),
             "Sommerso_": ("TEXT", 10),
             
-            # Campi aggiuntivi per completezza
+            # Extra fields
             "Sigla1": ("TEXT", 255),
             "Sigla_UG": ("TEXT", 255),
             "Nome": ("TEXT", 255),
@@ -1478,18 +1478,18 @@ class CARGProcessor:
 
     def _process_with_auxiliary_tables_gdb(self, shapefile, auxiliary_tables):
         """
-        Processing specifico per File Geodatabase con le tabelle ausiliarie trovate
+        Processingfor Geodatabase with auxiliary tables
         """
         arcpy.AddMessage("Processing with GDB auxiliary tables...")
         
         try:
-            # Carica dati dalle tabelle con gestione specifica per GDB
+            # Load data
             table_data = self._load_auxiliary_table_data_gdb_fixed(auxiliary_tables)
             
-            # Carica domini
+            # Load domains
             domain_mappings = self._load_geology_domain_mappings_safe()
             
-            # Applica mappature
+            # Apply mappings
             self._apply_geology_mappings_comprehensive_gdb(shapefile, table_data, domain_mappings)
             
             return True
@@ -1500,19 +1500,19 @@ class CARGProcessor:
 
     def _process_with_fallback(self, shapefile, partial_tables):
         """
-        Processing di fallback quando le tabelle ausiliarie non sono complete
+        Processing di fallback if auxiliary tables are incomplete
         """
         arcpy.AddMessage("Using fallback processing...")
         
         try:
-            # Processa le tabelle parziali se disponibili
+            # Process
             if partial_tables:
                 arcpy.AddMessage("Processing with {} partial tables...".format(len(partial_tables)))
                 table_data = self._load_auxiliary_table_data_gdb_fixed(partial_tables)
                 domain_mappings = self._load_geology_domain_mappings_safe()
                 self._apply_geology_mappings_comprehensive_gdb(shapefile, table_data, domain_mappings)
             
-            # Imposta valori di default per campi mancanti
+            # Set default values
             default_values = {
                 "Tipo_UQ": "Non classificato",
                 "Stato_UQ": "Non definito", 
@@ -1800,9 +1800,9 @@ class CARGProcessor:
             arcpy.AddError(traceback.format_exc())
 
     def _apply_t2000_mappings_gdb_corrected(self, shapefile, t2000_data, domain_mappings):
-        """Corrected T2000 mapping with case-insensitive field handling"""
+        """Corrected T2000 mapping with proper field name handling"""
         try:
-            arcpy.AddMessage("Starting CORRECTED T2000 mapping (v2)...")
+            arcpy.AddMessage("Starting CORRECTED T2000 mapping (v3 - FIXED)...")
             arcpy.AddMessage("T2000 data contains {} records".format(len(t2000_data)))
             
             if not t2000_data:
@@ -1814,18 +1814,19 @@ class CARGProcessor:
             for key in sample_keys:
                 arcpy.AddMessage("Sample T2000 key '{}' -> {}".format(key, t2000_data[key]))
             
-            # Define target fields and their sources
+            # FIXED: Use the actual field names created in the shapefile
+            # These match the field names from _get_feature_configs() for ST018Polygon
             field_mappings = {
-                "ETA_Super": "ETA_SUP",    # Target field -> source field in T2000 data
-                "ETA_Infer": "ETA_INF",
-                "Tipo_UG": "S1_TIPO", 
+                "ETA_super": "ETA_SUP",     # Match the actual field name created
+                "ETA_infer": "ETA_INF",     # Match the actual field name created  
+                "tipo_ug": "S1_TIPO",       # Match the actual field name created
                 "Sigla1": "SIGLA1",
-                "Sigla_UG": "SIGLA_CARTA",
+                "Sigla_ug": "SIGLA_CARTA",  # Match the actual field name created
                 "Nome": "NOME",
                 "Legenda": "LEGENDA"
             }
             
-            # FIXED: Case-insensitive field matching for shapefile
+            # Case-insensitive field matching for shapefile
             existing_fields = {f.name.upper(): f.name for f in arcpy.ListFields(shapefile)}
             available_mappings = {}
             
@@ -1838,12 +1839,21 @@ class CARGProcessor:
                 arcpy.AddError("UC_LEGE field not found in shapefile")
                 return
             
+            # Map target fields to their actual names in shapefile (case-insensitive)
             for target_field, source_field in field_mappings.items():
-                if target_field.upper() in existing_fields:
-                    available_mappings[existing_fields[target_field.upper()]] = source_field
-                    arcpy.AddMessage("Will map {} <- {}".format(existing_fields[target_field.upper()], source_field))
+                # Try exact match first
+                if target_field in existing_fields.values():
+                    available_mappings[target_field] = source_field
+                    arcpy.AddMessage("Will map {} <- {}".format(target_field, source_field))
                 else:
-                    arcpy.AddWarning("Target field {} not found in shapefile".format(target_field))
+                    # Try case-insensitive match
+                    target_upper = target_field.upper()
+                    if target_upper in existing_fields:
+                        actual_field_name = existing_fields[target_upper]
+                        available_mappings[actual_field_name] = source_field
+                        arcpy.AddMessage("Will map {} <- {} (case-insensitive)".format(actual_field_name, source_field))
+                    else:
+                        arcpy.AddWarning("Target field {} not found in shapefile".format(target_field))
             
             if not available_mappings:
                 arcpy.AddWarning("No T2000 target fields found in shapefile")
@@ -1857,6 +1867,7 @@ class CARGProcessor:
             updated_count = 0
             not_found_count = 0
             empty_uc_lege_count = 0
+            debug_sample_count = 0
             
             with arcpy.da.UpdateCursor(shapefile, cursor_fields) as cursor:
                 for row in cursor:
@@ -1875,27 +1886,41 @@ class CARGProcessor:
                         for i, (target_field, source_field) in enumerate(available_mappings.items(), 1):  # Start at index 1 (after UC_LEGE)
                             raw_value = data.get(source_field, "")
                             
-                            # Apply domain mapping based on field type
-                            if target_field.upper() in ["ETA_SUPER", "ETA_INFER"]:
-                                mapped_value = domain_mappings.get("eta", {}).get(raw_value, raw_value)
-                            elif target_field.upper() == "TIPO_UG":
-                                mapped_value = domain_mappings.get("sigla_tipo", {}).get(raw_value, raw_value)
-                            else:
-                                mapped_value = raw_value
+                            # FIXED: Apply domain mapping based on field type with proper field name matching
+                            mapped_value = raw_value  # Default to raw value
+                            
+                            target_field_upper = target_field.upper()
+                            if target_field_upper in ["ETA_SUPER", "ETA_INFER"]:
+                                # Apply ETA domain mapping
+                                if raw_value and raw_value in domain_mappings.get("eta", {}):
+                                    mapped_value = domain_mappings["eta"][raw_value]
+                                elif raw_value:
+                                    # Try string conversion for domain lookup
+                                    str_raw = str(raw_value).strip()
+                                    mapped_value = domain_mappings.get("eta", {}).get(str_raw, raw_value)
+                            elif target_field_upper in ["TIPO_UG"]:
+                                # Apply SIGLA_TIPO domain mapping  
+                                if raw_value and raw_value in domain_mappings.get("sigla_tipo", {}):
+                                    mapped_value = domain_mappings["sigla_tipo"][raw_value]
+                                elif raw_value:
+                                    str_raw = str(raw_value).strip()
+                                    mapped_value = domain_mappings.get("sigla_tipo", {}).get(str_raw, raw_value)
+                            # For other fields (Sigla1, Sigla_ug, Nome, Legenda), use raw value
                             
                             new_row[i] = mapped_value
                             row_updated = True
                             
                             # Debug first few updates
-                            if updated_count < 3:
-                                arcpy.AddMessage("  {} '{}' -> '{}' -> '{}'".format(
-                                    target_field, raw_value, 
+                            if debug_sample_count < 5:
+                                arcpy.AddMessage("  Row {}: {} '{}' -> '{}' -> '{}'".format(
+                                    debug_sample_count + 1, target_field, raw_value, 
                                     "domain_mapped" if mapped_value != raw_value else "direct",
-                                    mapped_value))
+                                    mapped_value[:50]))  # Limit output length
                         
                         if row_updated:
                             cursor.updateRow(new_row)
                             updated_count += 1
+                            debug_sample_count += 1
                     else:
                         not_found_count += 1
             
@@ -1904,20 +1929,76 @@ class CARGProcessor:
             arcpy.AddMessage("  Not found in T2000: {}".format(not_found_count))
             arcpy.AddMessage("  Empty UC_LEGE: {}".format(empty_uc_lege_count))
             
+            # Verification step - check if fields were actually populated
+            self._verify_t2000_field_population(shapefile, list(available_mappings.keys()))
+            
         except Exception as e:
-            arcpy.AddError("Error in corrected T2000 mapping v2: {}".format(str(e)))
+            arcpy.AddError("Error in corrected T2000 mapping v3: {}".format(str(e)))
             import traceback
             arcpy.AddError(traceback.format_exc())
 
+    def _get_feature_configs_fixed_st018polygon(self):
+        """Fixed ST018Polygon configuration - this should replace the ST018Polygon section in your _get_feature_configs method"""
+        return {
+            "ST018Polygon": {
+                "search_patterns": ["ST018Polygon"],
+                "fields": [
+                    # These are the actual fields that should be created/renamed
+                    {"old": "Pol_Uc", "new": "Pol_Uc"},
+                    {"old": "Uc_Lege", "new": "Uc_Lege"},  
+                    {"old": "Direzio", "new": "Direzione"},
+                    # Don't create these fields here - they'll be created in auxiliary table processing
+                    # They get populated from T1000, T2000, T3000 tables via UC_LEGE/UQ_CAR lookups
+                ],
+                "domains": [],  # Domains are handled via auxiliary tables
+                "output_name": "geologia_poligoni.shp",
+                "special_processing": "geology_polygons",
+                "keep_fields": ["Pol_Uc", "Uc_Lege", "Foglio", "Direzione", "Tipo_UQ", "Stato_UQ", 
+                            "ETA_super", "ETA_infer", "tipo_ug", "Tessitura", "Sigla1", "Sigla_ug", 
+                            "Nome", "Legenda", "Sommerso_"]
+            }
+        }
+
+    def _verify_t2000_field_population(self, shapefile, field_list):
+        """Verify that T2000 fields were actually populated"""
+        arcpy.AddMessage("=== VERIFYING T2000 FIELD POPULATION ===")
+        
+        for field_name in field_list:
+            try:
+                non_empty_count = 0
+                total_count = 0
+                sample_values = []
+                
+                with arcpy.da.SearchCursor(shapefile, [field_name]) as cursor:
+                    for row in cursor:
+                        total_count += 1
+                        value = row[0]
+                        if value and str(value).strip() and str(value).strip().lower() not in ["", "none", "null"]:
+                            non_empty_count += 1
+                            if len(sample_values) < 3:
+                                sample_values.append(str(value)[:30])  # First 30 chars
+                
+                if non_empty_count > 0:
+                    percentage = (non_empty_count / total_count * 100) if total_count > 0 else 0
+                    arcpy.AddMessage("  {}: {}/{} populated ({:.1f}%) - samples: {}".format(
+                        field_name, non_empty_count, total_count, percentage, sample_values))
+                else:
+                    arcpy.AddWarning("  {}: 0/{} populated - FIELD IS EMPTY!".format(field_name, total_count))
+                    
+            except Exception as e:
+                arcpy.AddWarning("  Error verifying {}: {}".format(field_name, str(e)))
+        
+        arcpy.AddMessage("=== END T2000 VERIFICATION ===")
+
     def _apply_t3000_mappings_gdb(self, shapefile, t3000_data, domain_mappings):
-        """Applica mappature T3000 per GDB - VERSIONE CORRETTA"""
+        """Apply T3000 mapping"""
         try:
-            # Per T3000, la struttura dovrebbe essere semplice: {id: tessitura}
+            # {id: tessitura}
             if not isinstance(t3000_data, dict):
                 arcpy.AddWarning("T3000 data is not in correct format")
                 return
                 
-            # Verifica campi esistenti
+            # Verify existing fields
             existing_fields = [f.name.upper() for f in arcpy.ListFields(shapefile)]
             
             cursor_fields = []
@@ -1986,7 +2067,7 @@ class CARGProcessor:
 
     def _cleanup_geology_fields_safe(self, shapefile):
         """
-        Pulizia sicura dei campi temporanei
+        clean tmp fields
         """
         temp_fields = [
             "TIPO", "TIPOLOGIA", "ID_LIMITE", "ID_ELEST", "CONTORNO", "AFFIORA", 
@@ -1999,7 +2080,7 @@ class CARGProcessor:
         fields_to_delete = []
         
         for temp_field in temp_fields:
-            # Cerca campo con nome esatto o simile
+            # search similar fields name
             for existing_field in existing_fields:
                 if (temp_field.upper() == existing_field.upper() or
                     temp_field.upper() in existing_field.upper()):
@@ -2012,7 +2093,6 @@ class CARGProcessor:
                 arcpy.AddMessage("Deleted {} temporary fields".format(len(fields_to_delete)))
             except Exception as e:
                 arcpy.AddWarning("Could not delete some temporary fields: {}".format(str(e)))
-                # Prova eliminazione individuale
                 deleted_count = 0
                 for field in fields_to_delete:
                     try:
@@ -2024,7 +2104,7 @@ class CARGProcessor:
 
     def _set_default_values_safe(self, shapefile, default_values):
         """
-        Imposta valori di default in modo sicuro
+        set default values
         """
         existing_fields = [f.name for f in arcpy.ListFields(shapefile)]
         update_fields = [field for field in default_values.keys() if field in existing_fields]
@@ -2042,7 +2122,7 @@ class CARGProcessor:
                     for i, field_name in enumerate(update_fields):
                         current_val = row[i] if i < len(row) else None
                         
-                        # Se il valore è vuoto, null o "None", usa il default
+                        # if empty, null or "None" value, use default value
                         if (current_val is None or 
                             str(current_val).strip() == "" or 
                             str(current_val).strip().lower() == "none"):
@@ -2062,7 +2142,7 @@ class CARGProcessor:
 
     def debug_gdb_complete_content(self):
         """
-        Debug completo del contenuto della GDB per troubleshooting
+        Debug of GDB
         """
         arcpy.AddMessage("\n=== COMPLETE GDB CONTENT ANALYSIS ===")
         
@@ -2070,14 +2150,14 @@ class CARGProcessor:
             original_workspace = arcpy.env.workspace
             arcpy.env.workspace = self.input_gdb
             
-            # Lista dataset
+            # List of datasets
             datasets = arcpy.ListDatasets("", "All")
             if datasets:
                 arcpy.AddMessage("Found {} datasets:".format(len(datasets)))
                 for ds in datasets:
                     arcpy.AddMessage("  Dataset: {} (type: {})".format(ds, arcpy.Describe(ds).datasetType))
                     
-                    # Contenuto del dataset
+                    # Contenuts of dataset
                     arcpy.env.workspace = os.path.join(self.input_gdb, ds)
                     fcs = arcpy.ListFeatureClasses()
                     tables = arcpy.ListTables()
@@ -2086,7 +2166,7 @@ class CARGProcessor:
                         for fc in fcs:
                             try:
                                 count = arcpy.GetCount_management(fc)
-                                fields = [f.name for f in arcpy.ListFields(fc)][:3]  # Prime 3 colonne
+                                fields = [f.name for f in arcpy.ListFields(fc)][:3]  # first 3 columns
                                 arcpy.AddMessage("    FC: {} ({} records, fields: {})".format(fc, count, fields))
                             except:
                                 arcpy.AddMessage("    FC: {} (error reading details)".format(fc))
@@ -2150,7 +2230,7 @@ class CARGProcessor:
         
         for table_key, table_path in auxiliary_tables.items():
             if not arcpy.Exists(table_path):
-                # Cerca nel root o in altri dataset
+                # Search in root or other dataset
                 table_name_variants = [
                     "T0180801000", "T0180802000", "T0180803000"
                 ][["t1000", "t2000", "t3000"].index(table_key)]
@@ -2521,15 +2601,15 @@ class CARGProcessor:
                 if not self.process_geology_polygons_final_fix(temp_files["shapefile"]):
                     raise RuntimeError("Geology polygon processing failed")
             elif special_processing == "geology_lines":
-                # Prima applica il processing standard
+                # Apply standard processing
                 self._process_standard_fields_and_domains(temp_files["shapefile"], config)
-                # Poi applica il processing speciale
+                # Then apply special processing
                 if not self.process_geology_lines_standard(temp_files["shapefile"]):
                     raise RuntimeError("Geology lines standard processing failed")
             elif special_processing == "geology_lines_pieghe":
-                # Prima applica il processing standard (inclusi i domini)
+                # Apply standard processing
                 self._process_standard_fields_and_domains(temp_files["shapefile"], config)
-                # Poi applica il processing speciale
+                # Then apply special processing
                 if not self.process_geology_lines_pieghe(temp_files["shapefile"]):
                     raise RuntimeError("Geology lines pieghe processing failed")
             else:
