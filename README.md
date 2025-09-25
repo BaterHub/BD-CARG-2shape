@@ -3,17 +3,17 @@
 **Versione**: 1.0  
 **Author**: Patrizio Petricca (patrizio.petricca@isprambiente.it)
 
-Tool Python per ArcGIS/ArcMap che convertono dati geologici da GeoPackage o geoDB codificati CARG in shapefile standardizzati.
+Tool Python per ArcGIS/ArcMap e ArcGIS_PRO che convertono dati geologici da GeoPackage o geoDB codificati CARG in shapefile standardizzati.
 
 ```
         ████████████████████████
         ████  ████  ████  ████  
         ████  ████  ████  ████  
     ██████╗ █████╗ ██████╗  ██████╗ 
-   ██╔════╝██╔══██╗██╔══██╗██╔════╝ 
-   ██║     ███████║██████╔╝██║  ███╗   BDgpkg2shape
-   ██║     ██╔══██║██╔══██╗██║   ██║   BDgeoDB2shape
-   ╚██████╗██║  ██║██║  ██║╚██████╔╝
+   ██╔════╝██╔══██╗██╔══██╗██╔════╝    Dgpkg2shape
+   ██║     ███████║██████╔╝██║  ███╗   BDgeoDB2shape
+   ██║     ██╔══██║██╔══██╗██║   ██║   Dgpkg2shapePRO
+   ╚██████╗██║  ██║██║  ██║╚██████╔╝   BDgeoDB2shapePRO
     ╚═════╝╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝ 
         ████  ████  ████  ████  
         ████████████████████████
@@ -38,8 +38,8 @@ Questi script convertono i dati geologici dal formato GeoPackage o geoDB codific
 ## Requisiti
 
 ### Software
-- **ArcGIS Desktop** 10.x o superiore con licenza ArcInfo
-- **Python 2.7** (integrato con ArcGIS Desktop)
+- **ArcGIS Desktop** 10.x o superiore con licenza ArcInfo **ArcGIS PRO** 3.x o superiore con licenza Standard
+- **Python 2.7** (integrato con ArcGIS Desktop); **Python 3.5 o superiore**  (integrato con ArcGIS PRO)
 - **ArcPy** (modulo Python di ArcGIS)
 
 ### Struttura dati di input
@@ -52,6 +52,7 @@ workspace/
     ├── d_12_tipo.dbf
     ├── d_13_tipo.dbf
     ├── d_19_tipo.dbf
+    ├── d_foglio.dbf
     ├── d_st018_line.dbf
     ├── d_st021.dbf
     ├── d_1000_tipo.dbf
@@ -85,9 +86,9 @@ Il tool processa automaticamente i seguenti layer CARG:
 ## Utilizzo
 
 ### Come Script ArcGIS
-1. Apri ArcGIS Desktop
+1. Apri ArcGIS Desktop / ArcGIS PRO
 2. Vai su **Geoprocessing** → **ArcToolbox**
-3. Aggiungi lo script come tool personalizzato (BDgpkg2shape.py per input.gpkg; BDgeoDB2shape.py per input.gdb)
+3. Aggiungi lo script come tool personalizzato (BDgpkg2shape.py o BDgpkg2shapePRO.py per input.gpkg; BDgeoDB2shape.py o BDgeoDB2shapePRO.py per input.gdb)
 4. Imposta il parametro:
    - **Input GeoPackage** -> data type **File** oppure **Input GeoDB** -> data type **Workspace**: percorso del file .gpkg o .gdb CARG
 
@@ -96,8 +97,8 @@ Il tool processa automaticamente i seguenti layer CARG:
 import arcpy
 import sys
 sys.path.append('path/to/script/directory')
-from BDgpkg2shape import main  ## per .gpkg
-from BDgeoDB2shape import main  ## per .gdb
+from BDgpkg2shape import main  ## per .gpkg NB BDgpkg2shapePRO  se ArcGIS PRO
+from BDgeoDB2shape import main  ## per .gdb NB BDgeoDB2shapePRO se ArcGIS PRO
 
 # Imposta il parametro
 arcpy.SetParameterAsText(0, r"C:\path\to\your\data.gpkg")  ## per .gpkg
@@ -109,8 +110,8 @@ main()
 
 ### Come Modulo Python
 ```python
-from BDgpkg2shape import CARGProcessor   ## per .gpkg
-from BDgeoDB2shape import CARGProcessor  ## per .gdb
+from BDgpkg2shape import CARGProcessor   ## per .gpkg NB BDgpkg2shapePRO  se ArcGIS PRO
+from BDgeoDB2shape import CARGProcessor  ## per .gdb  NB BDgeoDB2shapePRO se ArcGIS PRO
 
 # Crea il processore
 processor = CARGProcessor(r"C:\path\to\your\data.gpkg")  ## per .gpkg
@@ -187,7 +188,7 @@ Lo script include una funzione di conversione robusta per gestire problemi di co
 ```python
 def safe_string_conversion(self, value):
     # Gestione multipla di encoding con fallback
-    # Supporto per Python 2.7 e caratteri speciali
+    # Supporto per caratteri speciali
 ```
 
 ## Log e debugging
@@ -206,7 +207,7 @@ self.debug_utf8_issues_in_auxiliary_tables()
 
 ## Limitazioni note
 
-1. **Compatibilità**: Progettato per ArcGIS Desktop (Python 2.7)
+1. **Compatibilità**: Progettato per ArcGIS Desktop (Python 2.7) e ArcGIS PRO (Python 3.6)
 2. **Proiezione**: Mantiene il sistema di riferimento originale del GeoPackage o del GeoDB
 3. **Memoria**: Caricamento in memoria delle tabelle dei domini (ottimizzato per dataset tipici CARG)
 4. **Dipendenze**: Richiede presenza della cartella `domini/` con tabelle complete
