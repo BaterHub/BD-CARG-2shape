@@ -10,9 +10,9 @@ Tool Python per ArcGIS/ArcMap e ArcGIS_PRO che convertono dati geologici da GeoP
         ████  ████  ████  ████  
         ████  ████  ████  ████  
     ██████╗ █████╗ ██████╗  ██████╗ 
-   ██╔════╝██╔══██╗██╔══██╗██╔════╝    Dgpkg2shape
+   ██╔════╝██╔══██╗██╔══██╗██╔════╝    BDgpkg2shape
    ██║     ███████║██████╔╝██║  ███╗   BDgeoDB2shape
-   ██║     ██╔══██║██╔══██╗██║   ██║   Dgpkg2shapePRO
+   ██║     ██╔══██║██╔══██╗██║   ██║   BDgpkg2shapePRO
    ╚██████╗██║  ██║██║  ██║╚██████╔╝   BDgeoDB2shapePRO
     ╚═════╝╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝ 
         ████  ████  ████  ████  
