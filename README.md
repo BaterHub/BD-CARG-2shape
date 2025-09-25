@@ -3,7 +3,7 @@
 **Versione**: 1.0  
 **Author**: Patrizio Petricca (patrizio.petricca@isprambiente.it)
 
-Tools Python per ArcGIS/ArcMap che convertono dati geologici da GeoPackage o geoDB codificati CARG in shapefile standardizzati.
+Tool Python per ArcGIS/ArcMap che convertono dati geologici da GeoPackage o geoDB codificati CARG in shapefile standardizzati.
 
 ```
         ████████████████████████
@@ -89,7 +89,7 @@ Il tool processa automaticamente i seguenti layer CARG:
 2. Vai su **Geoprocessing** → **ArcToolbox**
 3. Aggiungi lo script come tool personalizzato (BDgpkg2shape.py per input.gpkg; BDgeoDB2shape.py per input.gdb)
 4. Imposta il parametro:
-   - **Input GeoPackage** oppure **Input GeoDB**: percorso del file .gpkg o .gdb CARG
+   - **Input GeoPackage** -> data type **File** oppure **Input GeoDB** -> data type **Workspace**: percorso del file .gpkg o .gdb CARG
 
 ### Da Command Line
 ```python
@@ -207,7 +207,7 @@ self.debug_utf8_issues_in_auxiliary_tables()
 ## Limitazioni note
 
 1. **Compatibilità**: Progettato per ArcGIS Desktop (Python 2.7)
-2. **Proiezione**: Mantiene il sistema di riferimento originale del GeoPackage
+2. **Proiezione**: Mantiene il sistema di riferimento originale del GeoPackage o del GeoDB
 3. **Memoria**: Caricamento in memoria delle tabelle dei domini (ottimizzato per dataset tipici CARG)
 4. **Dipendenze**: Richiede presenza della cartella `domini/` con tabelle complete
 
@@ -227,16 +227,13 @@ self.debug_utf8_issues_in_auxiliary_tables()
 - Attivare la funzione di debug per identificare record problematici
 - Lo script gestisce automaticamente la maggior parte dei problemi di encoding
 
+**"Topologic errors in Polygons from ST011 and ST018"**
+- Alcuni poligoni potrebbero non essere copiati negli shape in output
+- I problemi topologici vanno risolti prima di avviare la procedura (utilizzare tool di ArcMap o QGis)
+
 **"Could not delete some fields"**
 - Normale in alcuni contesti ArcGIS, non compromette il risultato finale
 - I campi vengono processati individualmente come fallback
-
-### Performance
-
-Per dataset di grandi dimensioni:
-- Utilizzare SSD per migliorare I/O
-- Aumentare RAM disponibile per ArcGIS
-- Considerare l'elaborazione per singoli fogli geologici
 
 ## Contributori
 
@@ -244,7 +241,7 @@ Per dataset di grandi dimensioni:
 
 ## Licenza
 
-Questo progetto è sviluppato per ISPRA nell'ambito del progetto CARG (Carta Geologica d'Italia).
+Questi tool sono sviluppati per ISPRA nell'ambito del progetto CARG (Carta Geologica d'Italia).
 
 ## Changelog
 
