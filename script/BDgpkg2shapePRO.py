@@ -1,7 +1,5 @@
-from __future__ import print_function
-
 """
-CARG Data Conversion Script
+CARG Data Conversion Script - ArcGIS Pro Version
 Converts geological data from CARG coded GeoPackage to shapefiles
 
    ██████╗ ██████╗ 
@@ -11,23 +9,18 @@ Converts geological data from CARG coded GeoPackage to shapefiles
    ██║     ██║     
    ╚═╝     ╚═╝     
  
- BDgpkg2shape v1.0
+ BDgpkg2shape v2.0 - ArcGIS Pro Compatible
  
 """
 
 import arcpy
 import os
 import shutil
-import codecs
 import csv
 import re
 import sys
 import time
 from collections import defaultdict
-
-# Reload and set encoding for Python 2 compatibility
-reload(sys)
-sys.setdefaultencoding('utf8')
 
 # Configure ArcPy environment
 arcpy.env.overwriteOutput = True
@@ -35,6 +28,7 @@ arcpy.env.overwriteOutput = True
 class CARGProcessor:
     """
     Optimized CARG data processor for converting GeoPackage layers to shapefiles
+    Compatible with ArcGIS Pro and Python 3
     """
     
     def __init__(self, input_gpkg):
@@ -59,25 +53,19 @@ class CARGProcessor:
         self.field_standards = self._get_field_standards()
 
     def safe_string_conversion(self, value):
-        """Single robust string conversion function"""
+        """Safe string conversion for Python 3"""
         if value is None:
             return ""
         
         try:
+            # In Python 3, str() handles Unicode properly
             return str(value).strip()
-        except UnicodeDecodeError:
-            try:
-                if isinstance(value, str):
-                    return value.decode('utf-8', errors='replace').strip()
-                else:
-                    return unicode(value).encode('utf-8', errors='replace').decode('utf-8').strip()
-            except:
-                try:
-                    return str(value).encode('ascii', errors='ignore').decode('ascii').strip()
-                except:
-                    return "ENCODING_ERROR"
         except Exception:
-            return "CONVERSION_ERROR"
+            try:
+                # Fallback for problematic values
+                return repr(value).strip()
+            except:
+                return "CONVERSION_ERROR"
 
     def get_foglio_from_geopackage(self):
         """Extract FoglioGeologico value from any layer in the geopackage"""
@@ -95,12 +83,10 @@ class CARGProcessor:
                         for row in cursor:
                             if row[0] is not None:
                                 self.foglio = str(row[0]).strip()
-                                arcpy.AddMessage("Found FoglioGeologico: {} in layer {}".format(
-                                    self.foglio, layer_name))
+                                arcpy.AddMessage(f"Found FoglioGeologico: {self.foglio} in layer {layer_name}")
                                 return self.foglio
             except Exception as e:
-                arcpy.AddWarning("Error reading FoglioGeologico from {}: {}".format(
-                    layer_name, str(e)))
+                arcpy.AddWarning(f"Error reading FoglioGeologico from {layer_name}: {str(e)}")
                 continue
         
         raise ValueError("FoglioGeologico field not found or empty in any layer")
@@ -349,65 +335,65 @@ class CARGProcessor:
         }
 
     def handle_direzione_field_for_geology_polygons(self, shapefile):
-            """
-            Manage Direzione field for geologia_poligoni:
-            - Copy 'Direzio' values to 'Direzione'
-            - Remove 'Direzio'
-            """
-            arcpy.AddMessage("Handling Direzione field for geologia_poligoni...")
+        """
+        Manage Direzione field for geologia_poligoni:
+        - Copy 'Direzio' values to 'Direzione'
+        - Remove 'Direzio'
+        """
+        arcpy.AddMessage("Handling Direzione field for geologia_poligoni...")
+        
+        try:
+            # Get existing fields
+            existing_fields = {f.name.upper(): f.name for f in arcpy.ListFields(shapefile)}
             
+            # Find Direzio field (case-insensitive)
+            direzio_field = None
+            for field_key, field_name in existing_fields.items():
+                if field_key in ["DIREZIO", "DIREZIONE"]:
+                    if "DIREZIO" in field_key:
+                        direzio_field = field_name
+                        break
+            
+            if not direzio_field:
+                arcpy.AddMessage("'Direzio' not found in geologia_poligoni")
+                return
+            
+            # Add 'Direzione' if doesn't exist
+            if "DIREZIONE" not in existing_fields:
+                # Check and copy 'Direzio' type
+                direzio_field_obj = None
+                for f in arcpy.ListFields(shapefile):
+                    if f.name == direzio_field:
+                        direzio_field_obj = f
+                        break
+                
+                if direzio_field_obj:
+                    field_length = getattr(direzio_field_obj, 'length', 50) if direzio_field_obj.type == 'String' else None
+                    arcpy.AddField_management(shapefile, "Direzione", direzio_field_obj.type, field_length=field_length)
+                    arcpy.AddMessage("Campo Direzione aggiunto")
+                else:
+                    # Fallback: add as text
+                    arcpy.AddField_management(shapefile, "Direzione", "TEXT", field_length=50)
+                    arcpy.AddMessage("'Direzione' field created (type TEXT as default)")
+            
+            # Copy values from 'Direzio' to 'Direzione'
+            with arcpy.da.UpdateCursor(shapefile, [direzio_field, "Direzione"]) as cursor:
+                for row in cursor:
+                    direzio_val = row[0]
+                    direzione_val = direzio_val if direzio_val is not None else ""
+                    cursor.updateRow([direzio_val, direzione_val])
+            
+            arcpy.AddMessage(f"Values copied from {direzio_field} to Direzione")
+            
+            # Remove 'Direzio' field
             try:
-                # Ottieni i campi esistenti
-                existing_fields = {f.name.upper(): f.name for f in arcpy.ListFields(shapefile)}
-                
-                # Trova i campi Direzio (case-insensitive)
-                direzio_field = None
-                for field_key, field_name in existing_fields.items():
-                    if field_key in ["DIREZIO", "DIREZIONE"]:
-                        if "DIREZIO" in field_key:
-                            direzio_field = field_name
-                            break
-                
-                if not direzio_field:
-                    arcpy.AddMessage("'Direzio' not found in geologia_poligoni")
-                    return
-                
-                # Add 'Direzione' if doesn't exist
-                if "DIREZIONE" not in existing_fields:
-                    # check anc copy 'Direzio' type
-                    direzio_field_obj = None
-                    for f in arcpy.ListFields(shapefile):
-                        if f.name == direzio_field:
-                            direzio_field_obj = f
-                            break
-                    
-                    if direzio_field_obj:
-                        field_length = getattr(direzio_field_obj, 'length', 50) if direzio_field_obj.type == 'String' else None
-                        arcpy.AddField_management(shapefile, "Direzione", direzio_field_obj.type, field_length=field_length)
-                        arcpy.AddMessage("Campo Direzione aggiunto")
-                    else:
-                        # Fallback: add as text
-                        arcpy.AddField_management(shapefile, "Direzione", "TEXT", field_length=50)
-                        arcpy.AddMessage("'Direzione' field created (type TEXT as default)")
-                
-                # Copy i values from 'Direzio' to 'Direzione'
-                with arcpy.da.UpdateCursor(shapefile, [direzio_field, "Direzione"]) as cursor:
-                    for row in cursor:
-                        direzio_val = row[0]
-                        direzione_val = direzio_val if direzio_val is not None else ""
-                        cursor.updateRow([direzio_val, direzione_val])
-                
-                arcpy.AddMessage("Values copied from {} to Direzione".format(direzio_field))
-                
-                # Remove 'Direzio' field
-                try:
-                    arcpy.DeleteField_management(shapefile, [direzio_field])
-                    arcpy.AddMessage("Field {} rremoved".format(direzio_field))
-                except Exception as e:
-                    arcpy.AddWarning("Impossible removing field {}: {}".format(direzio_field, str(e)))
-            
+                arcpy.DeleteField_management(shapefile, [direzio_field])
+                arcpy.AddMessage(f"Field {direzio_field} removed")
             except Exception as e:
-                arcpy.AddError("Error in modifing field 'Direzione': {}".format(str(e)))
+                arcpy.AddWarning(f"Impossible removing field {direzio_field}: {str(e)}")
+        
+        except Exception as e:
+            arcpy.AddError(f"Error in modifying field 'Direzione': {str(e)}")
 
     def standardize_field_names_and_order(self, shapefile_path):
         """
@@ -416,7 +402,7 @@ class CARGProcessor:
         shapefile_name = os.path.basename(shapefile_path)
         
         if shapefile_name not in self.field_standards:
-            arcpy.AddMessage("Standardization not defined for {}".format(shapefile_name))
+            arcpy.AddMessage(f"Standardization not defined for {shapefile_name}")
             return
         
         config = self.field_standards[shapefile_name]
@@ -427,7 +413,7 @@ class CARGProcessor:
         if "OBJECTID" in target_order:
             target_order.remove("OBJECTID")
         
-        arcpy.AddMessage("Standardizing fields for {}...".format(shapefile_name))
+        arcpy.AddMessage(f"Standardizing fields for {shapefile_name}...")
         
         try:
             # Get existing field info (excluding OBJECTID)
@@ -482,7 +468,7 @@ class CARGProcessor:
                     field_mappings.addFieldMap(field_map)
                     processed_fields.add(source_field_name)
                     
-                    arcpy.AddMessage("  Mapping: {} -> {}".format(source_field_name, target_field_name))
+                    arcpy.AddMessage(f"  Mapping: {source_field_name} -> {target_field_name}")
                 
                 else:
                     # Create empty field if doesn't exist
@@ -502,7 +488,7 @@ class CARGProcessor:
                         field_map.addInputField(shapefile_path, target_field_name)
                         field_mappings.addFieldMap(field_map)
                         processed_fields.add(target_field_name)
-                        arcpy.AddMessage("  Added new field: {}".format(target_field_name))
+                        arcpy.AddMessage(f"  Added new field: {target_field_name}")
             
             # Second pass: add remaining fields (excluding OBJECTID)
             for field_name, field_info in existing_fields_info.items():
@@ -527,7 +513,7 @@ class CARGProcessor:
                 arcpy.Delete_management(shapefile_path)
                 arcpy.Rename_management(temp_path, shapefile_path)
                 
-                arcpy.AddMessage("Field standardization completed successfully for {}".format(shapefile_name))
+                arcpy.AddMessage(f"Field standardization completed successfully for {shapefile_name}")
                 arcpy.AddMessage("="*60)
             
         except Exception as e:
@@ -538,7 +524,7 @@ class CARGProcessor:
                 except:
                     pass
             
-            arcpy.AddWarning("  Field standardization failed for {}: {}".format(shapefile_name, str(e)))
+            arcpy.AddWarning(f"  Field standardization failed for {shapefile_name}: {str(e)}")
 
     def _get_field_type_from_name(self, field_name):
         """Determine appropriate field type based on field name"""
@@ -566,7 +552,7 @@ class CARGProcessor:
             raise ValueError("Input GeoPackage path is required")
             
         if not os.path.exists(self.input_gpkg):
-            raise ValueError("Input GeoPackage path does not exist: {}".format(self.input_gpkg))
+            raise ValueError(f"Input GeoPackage path does not exist: {self.input_gpkg}")
         
         if not self.input_gpkg.lower().endswith('.gpkg'):
             raise ValueError("Input file must be a GeoPackage (.gpkg)")
@@ -604,16 +590,14 @@ class CARGProcessor:
                             pass
                 
                 shutil.rmtree(directory_path)
-                arcpy.AddMessage("Successfully removed directory: {}".format(directory_path))
+                arcpy.AddMessage(f"Successfully removed directory: {directory_path}")
                 return True
                 
             except Exception as e:
                 if attempt < max_attempts - 1:
-                    arcpy.AddWarning("Attempt {} failed to remove {}: {}".format(
-                        attempt + 1, directory_path, str(e)))
+                    arcpy.AddWarning(f"Attempt {attempt + 1} failed to remove {directory_path}: {str(e)}")
                 else:
-                    arcpy.AddError("Failed to remove directory after {} attempts: {}".format(
-                        max_attempts, directory_path))
+                    arcpy.AddError(f"Failed to remove directory after {max_attempts} attempts: {directory_path}")
         
         return False
 
@@ -625,13 +609,13 @@ class CARGProcessor:
         
         for folder in directories:
             if not self.safe_remove_directory(folder):
-                raise RuntimeError("Cannot proceed due to directory cleanup failure: {}".format(folder))
+                raise RuntimeError(f"Cannot proceed due to directory cleanup failure: {folder}")
             
             try:
                 os.makedirs(folder)
-                arcpy.AddMessage("Created directory: {}".format(folder))
+                arcpy.AddMessage(f"Created directory: {folder}")
             except Exception as e:
-                raise RuntimeError("Failed to create directory {}: {}".format(folder, str(e)))
+                raise RuntimeError(f"Failed to create directory {folder}: {str(e)}")
 
     def get_available_layers(self):
         """Enhanced layer discovery with caching"""
@@ -664,7 +648,7 @@ class CARGProcessor:
             arcpy.env.workspace = original_workspace
             
         except Exception as e:
-            arcpy.AddWarning("Error getting available layers: {}".format(str(e)))
+            arcpy.AddWarning(f"Error getting available layers: {str(e)}")
         
         self._available_layers = list(available_layers)
         return self._available_layers
@@ -708,7 +692,7 @@ class CARGProcessor:
             domain_table_path = os.path.join(self.domini_path, domain_file)
         
         if not arcpy.Exists(domain_table_path):
-            arcpy.AddWarning("Domain table not found: {}".format(domain_table_path))
+            arcpy.AddWarning(f"Domain table not found: {domain_table_path}")
             return {}
         
         try:
@@ -724,13 +708,12 @@ class CARGProcessor:
                     break
             
             if not desc_field:
-                arcpy.AddWarning("Description field matching '{}' not found in {}".format(
-                    desc_field_pattern, domain_file))
+                arcpy.AddWarning(f"Description field matching '{desc_field_pattern}' not found in {domain_file}")
                 return {}
             
             # Validate required fields exist
             if code_field not in field_names:
-                arcpy.AddWarning("Code field '{}' not found in {}".format(code_field, domain_file))
+                arcpy.AddWarning(f"Code field '{code_field}' not found in {domain_file}")
                 return {}
             
             # Build mapping dictionary efficiently with UTF-8 error handling
@@ -743,33 +726,20 @@ class CARGProcessor:
                         code_val, desc_val = row
                         
                         if code_val is not None and desc_val is not None:
-                            # Handle UTF-8 encoding issues
-                            try:
-                                desc_clean = str(desc_val).strip()
-                            except UnicodeDecodeError:
-                                # Try different encodings or replace problematic characters
-                                try:
-                                    if isinstance(desc_val, str):
-                                        desc_clean = desc_val.decode('utf-8', errors='replace').strip()
-                                    else:
-                                        desc_clean = unicode(desc_val).encode('utf-8', errors='replace').decode('utf-8').strip()
-                                except:
-                                    desc_clean = str(desc_val).encode('ascii', errors='ignore').decode('ascii').strip()
+                            # Handle string conversion (Python 3 handles UTF-8 natively)
+                            desc_clean = str(desc_val).strip()
                             
                             # Create multiple key mappings for different data types
-                            keys_to_map = []
-                            try:
-                                keys_to_map.append(str(code_val).strip())
-                            except UnicodeDecodeError:
-                                keys_to_map.append(str(code_val).encode('ascii', errors='ignore').decode('ascii').strip())
+                            keys_to_map = [str(code_val).strip()]
                             
                             try:
                                 # Try numeric conversions
-                                if str(code_val).replace('.', '').replace('-', '').isdigit():
-                                    float_val = float(str(code_val))
+                                str_code = str(code_val)
+                                if str_code.replace('.', '').replace('-', '').isdigit():
+                                    float_val = float(str_code)
                                     int_val = int(float_val)
                                     keys_to_map.extend([code_val, float_val, int_val])
-                            except (ValueError, TypeError, UnicodeDecodeError):
+                            except (ValueError, TypeError):
                                 keys_to_map.append(code_val)
                             
                             # Map all variants to the same description
@@ -778,21 +748,21 @@ class CARGProcessor:
                                 
                     except Exception as row_error:
                         # Skip problematic rows but continue processing
-                        arcpy.AddWarning("Skipping problematic row in {}: {}".format(domain_file, str(row_error)))
+                        arcpy.AddWarning(f"Skipping problematic row in {domain_file}: {str(row_error)}")
                         continue
             
             unique_mappings = len(set(code_map.values()))
-            arcpy.AddMessage("Loaded {} unique mappings from {}".format(unique_mappings, domain_file))
+            arcpy.AddMessage(f"Loaded {unique_mappings} unique mappings from {domain_file}")
             return code_map
             
         except Exception as e:
-            arcpy.AddWarning("Error reading domain {}: {}".format(domain_table_path, str(e)))
+            arcpy.AddWarning(f"Error reading domain {domain_table_path}: {str(e)}")
             return {}
 
     def apply_domain_mapping(self, shapefile, field_name, source_field, code_map):
         """Optimized domain mapping application with batch processing"""
         if not code_map:
-            arcpy.AddWarning("No domain mappings available for {}".format(field_name))
+            arcpy.AddWarning(f"No domain mappings available for {field_name}")
             return
         
         # Create field if it doesn't exist
@@ -840,20 +810,19 @@ class CARGProcessor:
             
             # Report results
             success_rate = (stats["mapped"] / stats["total"] * 100) if stats["total"] > 0 else 0
-            arcpy.AddMessage("Mapping '{}': {}/{} ({:.1f}% success)".format(
-                field_name, stats["mapped"], stats["total"], success_rate))
+            arcpy.AddMessage(f"Mapping '{field_name}': {stats['mapped']}/{stats['total']} ({success_rate:.1f}% success)")
             
             if stats["unmapped_samples"]:
                 sample_str = ", ".join(list(stats["unmapped_samples"])[:5])
-                arcpy.AddMessage("  Sample unmapped values: {}".format(sample_str))
+                arcpy.AddMessage(f"  Sample unmapped values: {sample_str}")
                 
         except Exception as e:
-            arcpy.AddError("Error applying domain mapping for {}: {}".format(field_name, str(e)))
+            arcpy.AddError(f"Error applying domain mapping for {field_name}: {str(e)}")
 
     def _add_unmapped_sample(self, unmapped_samples, src_val):
         """Helper to add unmapped sample with limit"""
         if len(unmapped_samples) < 5:
-            unmapped_samples.add("'{}' ({})".format(src_val, type(src_val).__name__))
+            unmapped_samples.add(f"'{src_val}' ({type(src_val).__name__})")
 
     def process_field_mapping(self, shapefile, field_config, existing_fields_dict):
         """Optimized field mapping with enhanced source field detection"""
@@ -870,7 +839,7 @@ class CARGProcessor:
                 break
         
         if not found_source:
-            arcpy.AddWarning("No source field found for '{}' in: {}".format(new_name, source_fields))
+            arcpy.AddWarning(f"No source field found for '{new_name}' in: {source_fields}")
             return False
         
         # Handle field mapping efficiently
@@ -884,7 +853,7 @@ class CARGProcessor:
                         break
                 
                 if not source_field_obj:
-                    arcpy.AddWarning("Source field object not found for {}".format(found_source))
+                    arcpy.AddWarning(f"Source field object not found for {found_source}")
                     return False
                 
                 # Add new field with appropriate properties
@@ -892,16 +861,16 @@ class CARGProcessor:
                 arcpy.AddField_management(shapefile, new_name, source_field_obj.type, field_length=field_length)
                 
                 # Copy values using field calculator
-                expression = "!{}!".format(found_source)
-                arcpy.CalculateField_management(shapefile, new_name, expression, "PYTHON_9.3")
+                expression = f"!{found_source}!"
+                arcpy.CalculateField_management(shapefile, new_name, expression, "PYTHON3")
                 
-                arcpy.AddMessage("Mapped {} -> {}".format(found_source, new_name))
+                arcpy.AddMessage(f"Mapped {found_source} -> {new_name}")
                 
             except Exception as e:
-                arcpy.AddWarning("Error mapping field {} -> {}: {}".format(found_source, new_name, str(e)))
+                arcpy.AddWarning(f"Error mapping field {found_source} -> {new_name}: {str(e)}")
                 return False
         else:
-            arcpy.AddMessage("Field {} already exists with correct name".format(new_name))
+            arcpy.AddMessage(f"Field {new_name} already exists with correct name")
         
         return True
 
@@ -948,7 +917,7 @@ class CARGProcessor:
             arcpy.AddMessage("SOMMERSO field processed successfully")
             
         except Exception as e:
-            arcpy.AddWarning("Error processing SOMMERSO field: {}".format(str(e)))
+            arcpy.AddWarning(f"Error processing SOMMERSO field: {str(e)}")
 
     def process_geology_lines_standard(self, shapefile):
         """
@@ -958,14 +927,14 @@ class CARGProcessor:
         arcpy.AddMessage("Processing geologia_linee with special handling...")
         
         try:
-            # Aggiungi campo Fase_txt se non esiste
+            # Add Fase_txt field if not exists
             existing_fields = {f.name.upper(): f.name for f in arcpy.ListFields(shapefile)}
             
             if "FASE_TXT" not in existing_fields:
                 arcpy.AddField_management(shapefile, "Fase_txt", "TEXT", field_length=255)
                 arcpy.AddMessage("'Fase_txt' created")
             
-            # Imposta tutti i valori di Fase_txt a "non applicabile"
+            # Set all Fase_txt values to "non applicabile"
             with arcpy.da.UpdateCursor(shapefile, ["Fase_txt"]) as cursor:
                 for row in cursor:
                     cursor.updateRow(["non applicabile/non classificabile"])
@@ -974,7 +943,7 @@ class CARGProcessor:
             return True
             
         except Exception as e:
-            arcpy.AddError("Error in processing geologia_linee: {}".format(str(e)))
+            arcpy.AddError(f"Error in processing geologia_linee: {str(e)}")
             return False
         
     def process_geology_lines_pieghe(self, shapefile):
@@ -983,12 +952,12 @@ class CARGProcessor:
         - same fields as geologia_linee.shp
         - Affiora: "non applicabile" 
         - Contorno: "no"
-        - Other fields mapped trough domains
+        - Other fields mapped through domains
         """
         arcpy.AddMessage("Processing geologia_linee_pieghe with standardized fields...")
         
         try:
-            # Obtain existing foelds
+            # Get existing fields
             existing_fields = {f.name.upper(): f.name for f in arcpy.ListFields(shapefile)}
             existing_field_names_upper = [f.upper() for f in existing_fields.values()]
             
@@ -1001,11 +970,11 @@ class CARGProcessor:
             for field_name, (field_type, length) in fields_to_add.items():
                 if field_name.upper() not in existing_fields:
                     arcpy.AddField_management(shapefile, field_name, field_type, field_length=length)
-                    arcpy.AddMessage("Campo {} aggiunto".format(field_name))
+                    arcpy.AddMessage(f"Campo {field_name} aggiunto")
                     existing_fields = {f.name.upper(): f.name for f in arcpy.ListFields(shapefile)}
                     existing_field_names_upper = [f.upper() for f in existing_fields.values()]
             
-            # set and populate fixed-string fields
+            # Set and populate fixed-string fields
             update_fields = []
             field_values = []
             
@@ -1017,13 +986,13 @@ class CARGProcessor:
                 update_fields.append("Cont_txt") 
                 field_values.append("no")
             
-            # update fields if required
+            # Update fields if required
             if update_fields:
                 with arcpy.da.UpdateCursor(shapefile, update_fields) as cursor:
                     for row in cursor:
                         cursor.updateRow(field_values)
                 
-                arcpy.AddMessage("Field compiled: Affior_txt = 'non applicabile', Cont_txt = 'no'")
+                arcpy.AddMessage("Fields compiled: Affior_txt = 'non applicabile', Cont_txt = 'no'")
             else:
                 arcpy.AddMessage("Field compilation not required")
             
@@ -1031,7 +1000,7 @@ class CARGProcessor:
             return True
             
         except Exception as e:
-            arcpy.AddError("geologia_linee_pieghe processing ERROR: {}".format(str(e)))
+            arcpy.AddError(f"geologia_linee_pieghe processing ERROR: {str(e)}")
             import traceback
             arcpy.AddError(traceback.format_exc())
             return False
@@ -1050,7 +1019,7 @@ class CARGProcessor:
         # Verify all auxiliary tables exist
         missing_tables = [name for name, path in auxiliary_tables.items() if not arcpy.Exists(path)]
         if missing_tables:
-            arcpy.AddError("Missing auxiliary tables: {}".format(missing_tables))
+            arcpy.AddError(f"Missing auxiliary tables: {missing_tables}")
             return False
 
         # Add required fields in batch
@@ -1059,7 +1028,7 @@ class CARGProcessor:
         # Process SOMMERSO field directly from shapefile
         self.process_sommerso_field_optimized(output_shapefile_ETRF)
 
-        # DEBUG: Analizza i problemi UTF-8 prima del processing
+        # DEBUG: Analyze UTF-8 issues before processing
         self.debug_utf8_issues_in_auxiliary_tables()
 
         # Process auxiliary tables with caching
@@ -1100,8 +1069,8 @@ class CARGProcessor:
 
     def debug_utf8_issues_in_auxiliary_tables(self):
         """
-        Funzione di debug per identificare record problematici nelle tabelle ausiliarie
-        VERSIONE CORRETTA con nomi campi reali
+        Debug function to identify problematic records in auxiliary tables
+        CORRECTED VERSION with real field names
         """
         arcpy.AddMessage("=== DEBUG UTF-8 ISSUES ===")
         
@@ -1125,22 +1094,22 @@ class CARGProcessor:
             fields = config["fields"]
             
             if not arcpy.Exists(table_path):
-                arcpy.AddMessage("Table {} not found, skipping...".format(table_name))
+                arcpy.AddMessage(f"Table {table_name} not found, skipping...")
                 continue
                 
-            arcpy.AddMessage("\n--- Debugging table: {} ---".format(table_name))
+            arcpy.AddMessage(f"\n--- Debugging table: {table_name} ---")
             
             try:
                 # First test: count number of records
                 total_count = arcpy.GetCount_management(table_path)
-                arcpy.AddMessage("Total records in {}: {}".format(table_name, str(total_count)))
+                arcpy.AddMessage(f"Total records in {table_name}: {str(total_count)}")
                 
-                # Obtain available records
+                # Get available records
                 available_fields = [f.name for f in arcpy.ListFields(table_path)]
                 test_fields = [f for f in fields if f in available_fields]
                 
-                arcpy.AddMessage("Available fields: {}".format(available_fields))
-                arcpy.AddMessage("Testing fields: {}".format(test_fields))
+                arcpy.AddMessage(f"Available fields: {available_fields}")
+                arcpy.AddMessage(f"Testing fields: {test_fields}")
                 
                 # Test all fields
                 problematic_records = []
@@ -1161,14 +1130,14 @@ class CARGProcessor:
                                     if field_value is not None:
                                         str_value = self.safe_string_conversion(field_value)
                                         
-                                        # Test encoding/decoding
+                                        # Test encoding/decoding (Python 3 handles UTF-8 natively)
                                         try:
                                             str_value.encode('utf-8').decode('utf-8')
-                                        except UnicodeDecodeError as encode_error:
+                                        except UnicodeError as encode_error:
                                             problematic_records.append({
                                                 "record_id": record_id,
                                                 "field": field_name,
-                                                "error": "UTF-8 encode/decode error: {}".format(str(encode_error)),
+                                                "error": f"UTF-8 encode/decode error: {str(encode_error)}",
                                                 "value_type": type(field_value).__name__,
                                                 "value_preview": repr(str_value)[:100]
                                             })
@@ -1178,33 +1147,31 @@ class CARGProcessor:
                                     problematic_records.append({
                                         "record_id": record_id,
                                         "field": field_name,
-                                        "error": "General error: {}".format(str(field_error)),
+                                        "error": f"General error: {str(field_error)}",
                                         "value_type": type(field_value).__name__,
                                         "value_preview": "Could not preview"
                                     })
                         
-                        # Progress report each 50 record
+                        # Progress report every 50 records
                         if processed_count % 50 == 0:
-                            arcpy.AddMessage("Processed {} records...".format(processed_count))
+                            arcpy.AddMessage(f"Processed {processed_count} records...")
                             
-                arcpy.AddMessage("Completed processing {} records from {}".format(processed_count, table_name))
+                arcpy.AddMessage(f"Completed processing {processed_count} records from {table_name}")
                 
-                # Report record with problems
+                # Report problematic records
                 if problematic_records:
-                    arcpy.AddMessage("\n*** PROBLEMATIC RECORDS FOUND IN {} ***".format(table_name))
+                    arcpy.AddMessage(f"\n*** PROBLEMATIC RECORDS FOUND IN {table_name} ***")
                     for i, record in enumerate(problematic_records):
-                        arcpy.AddMessage("Problem #{}: Record ID/FID: {}, Field: '{}', Error: {}".format(
-                            i+1, record["record_id"], record["field"], record["error"]))
-                        arcpy.AddMessage("  Value type: {}, Preview: {}".format(
-                            record["value_type"], record["value_preview"]))
+                        arcpy.AddMessage(f"Problem #{i+1}: Record ID/FID: {record['record_id']}, Field: '{record['field']}', Error: {record['error']}")
+                        arcpy.AddMessage(f"  Value type: {record['value_type']}, Preview: {record['value_preview']}")
                         if i >= 10:  # List first 10 problems
-                            arcpy.AddMessage("  ... and {} more problems".format(len(problematic_records) - 10))
+                            arcpy.AddMessage(f"  ... and {len(problematic_records) - 10} more problems")
                             break
                 else:
-                    arcpy.AddMessage("No UTF-8 problems found in {}".format(table_name))
+                    arcpy.AddMessage(f"No UTF-8 problems found in {table_name}")
                     
             except Exception as table_error:
-                arcpy.AddError("Error debugging table {}: {}".format(table_name, str(table_error)))
+                arcpy.AddError(f"Error debugging table {table_name}: {str(table_error)}")
                 import traceback
                 arcpy.AddError(traceback.format_exc())
         
@@ -1415,7 +1382,7 @@ class CARGProcessor:
 
         # create CSV 
         report_csv = os.path.join(self.workspace, "F" + self.foglio + "_geometry_issues.csv")
-        with codecs.open(report_csv, "w", "utf-8") as csvfile:
+        with open(report_csv, "w", encoding="utf-8") as csvfile:
             writer = csv.writer(csvfile)
             # Remove "tmp" fields
             writer.writerow(["Pol_ID", "Layer", "Problem"])

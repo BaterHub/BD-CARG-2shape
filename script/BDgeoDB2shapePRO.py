@@ -2588,14 +2588,32 @@ class CARGProcessor:
                 )
 
     def _add_foglio_field(self, shapefile):
-        """Add and populate Foglio field from geoDB FoglioGeologico"""
+        """Add and populate Foglio field with domain mapping from d_foglio.dbf"""
         existing_fields = {f.name.upper(): f.name for f in arcpy.ListFields(shapefile)}
         
         if "FOGLIO" not in existing_fields:
-            arcpy.AddField_management(shapefile, "Foglio", "TEXT", field_length=50)
+            arcpy.AddField_management(shapefile, "Foglio", "TEXT", field_length=255)
         
-        # Use the foglio value extracted from geoDB
-        arcpy.CalculateField_management(shapefile, "Foglio", "'{}'".format(self.foglio), "PYTHON_9.3")
+        # Load domain mappings for foglio
+        foglio_domain = self.load_domain_mappings("d_foglio.dbf", code_field="N1", desc_field_pattern="N2", is_gpkg_table=False)
+        
+        if not foglio_domain:
+            arcpy.AddWarning("Domain mapping for Foglio not found in d_foglio.dbf - using raw values")
+            # Fallback to original behavior
+            arcpy.CalculateField_management(shapefile, "Foglio", "'{}'".format(self.foglio), "PYTHON_9.3")
+            return
+        
+        # Apply domain mapping to convert foglio value
+        mapped_foglio = foglio_domain.get(self.foglio, self.foglio)  # Use original if not found in domain
+        
+        # Log the mapping result
+        if mapped_foglio != self.foglio:
+            arcpy.AddMessage("Foglio mapped: '{}' -> '{}'".format(self.foglio, mapped_foglio))
+        else:
+            arcpy.AddMessage("Foglio value '{}' not found in domain, using original value".format(self.foglio))
+        
+        # Set the mapped value
+        arcpy.CalculateField_management(shapefile, "Foglio", "'{}'".format(mapped_foglio), "PYTHON_9.3")
 
     def _cleanup_output_fields(self, shapefile, config):
         """Clean up output fields based on configuration - versione sicura"""
