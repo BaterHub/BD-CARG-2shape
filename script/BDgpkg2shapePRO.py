@@ -52,6 +52,38 @@ class CARGProcessor:
         # Field standardization configurations
         self.field_standards = self._get_field_standards()
 
+    def setup_file_logging(self):
+        """Setup dual logging to file and arcpy with minimal changes"""
+        self.log_file = os.path.join(self.workspace, f"F{self.foglio}_processing.log")
+        
+        # Crea un handler per il file
+        self.file_handler = open(self.log_file, 'w', encoding='utf-8')
+        
+        # Redirigi stdout per catturare anche i print
+        self.original_stdout = sys.stdout
+        sys.stdout = DualLogger(self.original_stdout, self.file_handler)
+
+    def close_file_logging(self):
+        """Close file logging"""
+        if hasattr(self, 'file_handler') and self.file_handler:
+            sys.stdout = self.original_stdout
+            self.file_handler.close()
+
+    class DualLogger:
+        """Logger che scrive sia su file che su stdout"""
+        def __init__(self, original_stdout, file_handler):
+            self.original_stdout = original_stdout
+            self.file_handler = file_handler
+        
+        def write(self, message):
+            if message.strip():  # Evita righe vuote
+                self.original_stdout.write(message)
+                self.file_handler.write(f"{time.strftime('%Y-%m-%d %H:%M:%S')} - {message}")
+        
+        def flush(self):
+            self.original_stdout.flush()
+            self.file_handler.flush()
+
     def safe_string_conversion(self, value):
         """Safe string conversion for Python 3"""
         if value is None:
@@ -1831,27 +1863,50 @@ class CARGProcessor:
         """Main optimized processing function with enhanced error handling and performance"""
         start_time = time.time()
         
+        # INIZIALIZZA PRIMA I WORKSPACE E VALIDA
         try:
             # Setup workspace
             self.setup_workspace()
 
-            # Validate inputs
+            # Validate inputs - QUESTA È LA FUNZIONE CHE IMPOSTA self.foglio
             self.validate_inputs()
+            
+            # ORA PUOI CREARE IL FILE LOG con il foglio estratto
+            log_file = os.path.join(self.workspace, f"F{self.foglio}_processing.log")
+            file_handler = open(log_file, 'w', encoding='utf-8')
+            
+            def log_to_file(message):
+                """Helper function to write to log file"""
+                timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
+                file_handler.write(f"{timestamp} - {message}\n")
+                file_handler.flush()
+            
+            log_to_file("CARG Data Conversion Started")
+            log_to_file(f"Input GeoPackage: {self.input_gpkg}")
+            log_to_file(f"Extracted FoglioGeologico: {self.foglio}")
+            
+            # Continua con il resto del processing...
             self.diagnose_geopackage_quality()  # comment to skip gpkg quality check
+            log_to_file("Geopackage quality diagnosis completed")
 
             # Log the extracted foglio value
             arcpy.AddMessage("Extracted FoglioGeologico: {}".format(self.foglio))
+            log_to_file("Extracted FoglioGeologico: {}".format(self.foglio))
             
             # Check domini folder
             if not os.path.exists(self.domini_path):
                 arcpy.AddWarning("Domini folder not found - domain mappings will be skipped")
+                log_to_file("WARNING: Domini folder not found - domain mappings will be skipped")
             
             # Get available layers with caching
             available_layers = self.get_available_layers()
             arcpy.AddMessage("Found {} layers in GeoPackage".format(len(available_layers)))
+            log_to_file("Found {} layers in GeoPackage".format(len(available_layers)))
             arcpy.AddMessage("="*60)
+            log_to_file("="*60)
             
             if not available_layers:
+                log_to_file("ERROR: No layers found in input GeoPackage!")
                 raise RuntimeError("No layers found in input GeoPackage!")
             
             # Process all feature classes
@@ -1865,6 +1920,7 @@ class CARGProcessor:
                     
                     if not found_layer:
                         arcpy.AddWarning("Layer not found for {}".format(fc_name))
+                        log_to_file("WARNING: Layer not found for {}".format(fc_name))
                         failed_count += 1
                         continue
                     
@@ -1872,40 +1928,84 @@ class CARGProcessor:
                     input_fc = os.path.join(self.input_gpkg, found_layer)
                     
                     # Process the feature class
+                    arcpy.AddMessage("Processing {} -> {}...".format(fc_name, config["output_name"]))
+                    log_to_file("Processing {} -> {}...".format(fc_name, config["output_name"]))
+                    
                     if self.process_feature_class_optimized(input_fc, fc_name, config):
                         processed_count += 1
+                        log_to_file("SUCCESS: Processed {}".format(fc_name))
                     else:
                         failed_count += 1
+                        log_to_file("FAILED: Processing {}".format(fc_name))
                         
                 except Exception as e:
                     arcpy.AddError("Error processing {}: {}".format(fc_name, str(e)))
+                    log_to_file("ERROR processing {}: {}".format(fc_name, str(e)))
                     failed_count += 1
             
             # APPEND geology lines
             arcpy.AddMessage("="*60)
+            log_to_file("="*60)
             arcpy.AddMessage("FINAL PROCESSING: COMBINING GEOLOGY LINES")
+            log_to_file("FINAL PROCESSING: COMBINING GEOLOGY LINES")
             arcpy.AddMessage("="*60)
+            log_to_file("="*60)
             self.combine_geology_lines_optimized()
+            log_to_file("Geology lines combination completed")
             
             # Apply field standardization to all remaining files
             self._standardize_all_output_files()
+            log_to_file("Field standardization completed")
             
             # Final cleanup
             self.final_cleanup_optimized()
+            log_to_file("Final cleanup completed")
             
             # Report results
             processing_time = time.time() - start_time
             arcpy.AddMessage("Processing completed in {:.1f} seconds!".format(processing_time))
             arcpy.AddMessage("Successfully processed: {} | Failed: {}".format(processed_count, failed_count))
             
+            # Log dei risultati finali
+            log_to_file("Processing completed in {:.1f} seconds!".format(processing_time))
+            log_to_file("Successfully processed: {} | Failed: {}".format(processed_count, failed_count))
+            log_to_file("SCRIPT COMPLETED SUCCESSFULLY")
+            
             # List output files
             self._report_output_files()
             
         except Exception as e:
+            # Se c'è un errore prima della creazione del file_handler, crealo ora
+            if 'file_handler' not in locals():
+                try:
+                    # Prova a creare il file log con un nome generico se self.foglio non è disponibile
+                    log_file = os.path.join(self.workspace, "processing_error.log")
+                    file_handler = open(log_file, 'w', encoding='utf-8')
+                    
+                    def log_to_file(message):
+                        timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
+                        file_handler.write(f"{timestamp} - {message}\n")
+                        file_handler.flush()
+                    
+                    log_to_file(f"ERROR before foglio extraction: {str(e)}")
+                except:
+                    pass  # Se non riesce a creare il log, continua comunque
+            
             arcpy.AddError("Script failed: {}".format(str(e)))
             import traceback
             arcpy.AddError(traceback.format_exc())
+            
+            # Se file_handler esiste, logga l'errore
+            if 'file_handler' in locals():
+                log_to_file("SCRIPT FAILED: {}".format(str(e)))
+                log_to_file("TRACEBACK: {}".format(traceback.format_exc()))
+            
             raise
+        
+        finally:
+            # CHIUDI IL FILE HANDLER se esiste
+            if 'file_handler' in locals():
+                file_handler.close()
 
     def _standardize_all_output_files(self):
         """Apply field standardization to all output files"""
