@@ -1,4 +1,4 @@
-"""
+﻿"""
 CARG Data Conversion Script for ArcGIS Pro
 Converts geological data from CARG coded GeoDB to shapefiles
 
@@ -23,6 +23,7 @@ from collections import defaultdict
 
 # Configure ArcPy environment
 arcpy.env.overwriteOutput = True
+arcpy.env.parallelProcessingFactor = "100%"
 
 class CARGProcessor:
     """
@@ -490,9 +491,23 @@ class CARGProcessor:
         arcpy.AddMessage("Standardizing fields for {}...".format(shapefile_name))
         
         try:
-            # Get existing field info (excluding OBJECTID)
-            existing_fields_info = {f.name: f for f in arcpy.ListFields(shapefile_path) 
-                                if f.type not in ['OID']}
+            # Helper to exclude computed geometry metrics and system-like fields
+            def _is_excluded_field(name):
+                n = name.upper()
+                if n in ("OBJECTID",):
+                    return True
+                if n.startswith("SHAPE_") and n != "SHAPE":
+                    return True
+                return False
+
+            # Get existing field info (excluding OBJECTID and excluded names)
+            existing_fields_info = {}
+            for f in arcpy.ListFields(shapefile_path):
+                if f.type in ['OID']:
+                    continue
+                if _is_excluded_field(f.name):
+                    continue
+                existing_fields_info[f.name] = f
             
             # Create temporary file for standardization
             workspace_dir = os.path.dirname(shapefile_path)
@@ -553,8 +568,13 @@ class CARGProcessor:
                         arcpy.AddField_management(shapefile_path, target_field_name, field_type, field_length=field_length)
                         
                         # Update field info
-                        existing_fields_info = {f.name: f for f in arcpy.ListFields(shapefile_path) 
-                                            if f.type not in ['OID']}
+                        existing_fields_info = {}
+                        for f in arcpy.ListFields(shapefile_path):
+                            if f.type in ['OID']:
+                                continue
+                            if _is_excluded_field(f.name):
+                                continue
+                            existing_fields_info[f.name] = f
                     
                     # Now add the mapping
                     if target_field_name in existing_fields_info:
@@ -564,10 +584,12 @@ class CARGProcessor:
                         processed_fields.add(target_field_name)
                         arcpy.AddMessage("  Added new field: {}".format(target_field_name))
             
-            # Second pass: add remaining fields (excluding OBJECTID)
+            # Second pass: add remaining fields (excluding OBJECTID and excluded)
             for field_name, field_info in existing_fields_info.items():
                 if (field_name not in processed_fields and 
                     field_info.type not in ['OID', 'Geometry']):
+                    if _is_excluded_field(field_name):
+                        continue
                     
                     field_map = arcpy.FieldMap()
                     field_map.addInputField(shapefile_path, field_name)
@@ -602,7 +624,7 @@ class CARGProcessor:
 
     def _get_field_type_from_name(self, field_name):
         """Determine appropriate field type based on field name"""
-        numeric_patterns = ["Area", "Perimeter", "Length", "Quota", "Inclinaz", "Immersione", "Direzione"]
+        numeric_patterns = ["Area", "Perimeter", "Length", "Quota", "Inclinaz", "Immersione"]
         integer_patterns = ["Num_", "FID"]
         
         field_name_upper = field_name.upper()
@@ -618,7 +640,7 @@ class CARGProcessor:
                 return "LONG", None
         
         # Default: text field
-        return "TEXT", 255
+        return "TEXT", 254
 
     def validate_inputs(self):
         """Validate input parameters with enhanced checks for File Geodatabase"""
@@ -692,6 +714,17 @@ class CARGProcessor:
                 arcpy.AddMessage("Created directory: {}".format(folder))
             except Exception as e:
                 raise RuntimeError("Failed to create directory {}: {}".format(folder, str(e)))
+
+        # Create temporary File Geodatabase to avoid shapefile field-type limits in intermediate steps
+        scratch_folder = getattr(arcpy.env, 'scratchFolder', None) or self.workspace
+        self.temp_gdb = os.path.join(scratch_folder, "carg_temp.gdb")
+        try:
+            if arcpy.Exists(self.temp_gdb):
+                arcpy.Delete_management(self.temp_gdb)
+            arcpy.CreateFileGDB_management(scratch_folder, os.path.basename(self.temp_gdb))
+            arcpy.AddMessage("Created temporary GDB: {}".format(self.temp_gdb))
+        except Exception as e:
+            raise RuntimeError("Failed to create temporary GDB {}: {}".format(self.temp_gdb, str(e)))
 
     def get_available_layers(self):
         """Enhanced layer discovery for GDB with nested structure"""
@@ -777,7 +810,10 @@ class CARGProcessor:
         return name[:31] if name else "unnamed"
 
     def load_domain_mappings(self, domain_file, code_field="CODE", desc_field_pattern="DESC", is_gpkg_table=False):
-        """Optimized domain mapping loader with UTF-8 error handling"""
+        """Optimized domain mapping loader with UTF-8 error handling and caching"""
+        cache_key = (domain_file, code_field, desc_field_pattern, is_gpkg_table)
+        if cache_key in self._domain_cache:
+            return self._domain_cache[cache_key]
         if is_gpkg_table:
             domain_table_path = os.path.join(self.input_gdb, domain_file)
         else:
@@ -845,10 +881,12 @@ class CARGProcessor:
             
             unique_mappings = len(set(code_map.values()))
             arcpy.AddMessage("Loaded {} unique mappings from {}".format(unique_mappings, domain_file))
+            self._domain_cache[cache_key] = code_map
             return code_map
             
         except Exception as e:
             arcpy.AddWarning("Error reading domain {}: {}".format(domain_table_path, str(e)))
+            self._domain_cache[cache_key] = {}
             return {}
 
     def apply_domain_mapping(self, shapefile, field_name, source_field, code_map):
@@ -860,7 +898,7 @@ class CARGProcessor:
         # Create field if it doesn't exist
         existing_fields = {f.name.upper(): f.name for f in arcpy.ListFields(shapefile)}
         if field_name.upper() not in existing_fields:
-            arcpy.AddField_management(shapefile, field_name, "TEXT", field_length=255)
+            arcpy.AddField_management(shapefile, field_name, "TEXT", field_length=254)
         
         # Apply mapping with optimized cursor
         stats = {"mapped": 0, "total": 0, "unmapped_samples": set()}
@@ -1057,7 +1095,7 @@ class CARGProcessor:
             existing_fields = {f.name.upper(): f.name for f in arcpy.ListFields(shapefile)}
             
             if "FASE_TXT" not in existing_fields:
-                arcpy.AddField_management(shapefile, "Fase_txt", "TEXT", field_length=255)
+                arcpy.AddField_management(shapefile, "Fase_txt", "TEXT", field_length=254)
                 arcpy.AddMessage("'Fase_txt' created")
             
             # Set all Fase_txt values to "non applicabile"
@@ -1089,8 +1127,8 @@ class CARGProcessor:
             
             # Add required fields
             fields_to_add = {
-                "Affior_txt": ("TEXT", 255),
-                "Cont_txt": ("TEXT", 255)
+                "Affior_txt": ("TEXT", 254),
+                "Cont_txt": ("TEXT", 254)
             }
             
             for field_name, (field_type, length) in fields_to_add.items():
@@ -1374,25 +1412,25 @@ class CARGProcessor:
         """
         fields_to_add = {
             # Main fields
-            "Tipo_UQ": ("TEXT", 255),
+            "Tipo_UQ": ("TEXT", 254),
             "TempTIPO": ("TEXT", 50), 
-            "Stato_UQ": ("TEXT", 255),
+            "Stato_UQ": ("TEXT", 254),
             "TempSTATO": ("TEXT", 50),
-            "ETA_Super": ("TEXT", 255),
-            "ETA_Infer": ("TEXT", 255),
+            "ETA_Super": ("TEXT", 254),
+            "ETA_Infer": ("TEXT", 254),
             "TMP_super": ("TEXT", 50), 
             "TMP_infer": ("TEXT", 50),
-            "Tipo_UG": ("TEXT", 255),
+            "Tipo_UG": ("TEXT", 254),
             "Temp_UnGeo": ("TEXT", 50), 
-            "Tessitura": ("TEXT", 255),
+            "Tessitura": ("TEXT", 254),
             "TempTESS": ("TEXT", 50),
             "Sommerso_": ("TEXT", 10),
             
             # Extra fields
-            "Sigla1": ("TEXT", 255),
-            "Sigla_UG": ("TEXT", 255),
-            "Nome": ("TEXT", 255),
-            "Legenda": ("TEXT", 255)
+            "Sigla1": ("TEXT", 254),
+            "Sigla_UG": ("TEXT", 254),
+            "Nome": ("TEXT", 254),
+            "Legenda": ("TEXT", 254)
         }
         
         existing_fields = {f.name for f in arcpy.ListFields(shapefile)}
@@ -2577,22 +2615,21 @@ class CARGProcessor:
             self._cleanup_temp_files(temp_files)
 
     def _get_temp_file_paths(self, fc_name):
-        """Generate temporary file paths for processing"""
+        """Generate temporary paths for processing inside a GDB (avoids shp limits)"""
         base_name = self.sanitize_shapefile_name(fc_name)
         return {
-            "shapefile": os.path.join(self.workspace_shape, base_name + ".shp"),
+            "shapefile": os.path.join(self.temp_gdb, base_name),
         }
 
     def _convert_and_keep_projection(self, input_fc, temp_files):
-        """Convert feature class to shapefile maintaining original projection"""
-        # Clean existing files
+        """Convert input feature class into temp GDB maintaining projection (no shp yet)"""
+        # Clean existing temp
         if arcpy.Exists(temp_files["shapefile"]):
             arcpy.Delete_management(temp_files["shapefile"])
         
-        # Convert to shapefile mantenendo la proiezione originale
-        base_name = os.path.splitext(os.path.basename(temp_files["shapefile"]))[0]
+        out_name = os.path.basename(temp_files["shapefile"])  # FC name in GDB
         arcpy.FeatureClassToFeatureClass_conversion(
-            input_fc, self.workspace_shape, base_name + ".shp"
+            input_fc, self.temp_gdb, out_name
         )
         
         # Load and store reference system (SR from the first processed layer)
@@ -2624,7 +2661,7 @@ class CARGProcessor:
         existing_fields = {f.name.upper(): f.name for f in arcpy.ListFields(shapefile)}
         
         if "FOGLIO" not in existing_fields:
-            arcpy.AddField_management(shapefile, "Foglio", "TEXT", field_length=255)
+            arcpy.AddField_management(shapefile, "Foglio", "TEXT", field_length=254)
         
         # Load domain mappings for foglio
         foglio_domain = self.load_domain_mappings("d_foglio.dbf", code_field="N1", desc_field_pattern="N2", is_gpkg_table=False)
@@ -2632,7 +2669,7 @@ class CARGProcessor:
         if not foglio_domain:
             arcpy.AddWarning("Domain mapping for Foglio not found in d_foglio.dbf - using raw values")
             # Fallback to original behavior
-            arcpy.CalculateField_management(shapefile, "Foglio", "'{}'".format(self.foglio), "PYTHON_9.3")
+            arcpy.CalculateField_management(shapefile, "Foglio", "'{}'".format(self.foglio), "PYTHON3")
             return
         
         # Apply domain mapping to convert foglio value
@@ -2645,7 +2682,7 @@ class CARGProcessor:
             arcpy.AddMessage("Foglio value '{}' not found in domain, using original value".format(self.foglio))
         
         # Set the mapped value
-        arcpy.CalculateField_management(shapefile, "Foglio", "'{}'".format(mapped_foglio), "PYTHON_9.3")
+        arcpy.CalculateField_management(shapefile, "Foglio", "'{}'".format(mapped_foglio), "PYTHON3")
 
     def _cleanup_output_fields(self, shapefile, config):
         """Clean up output fields based on configuration - versione sicura"""
@@ -2669,6 +2706,13 @@ class CARGProcessor:
         
         # Determine fields to delete
         fields_to_delete = [f for f in existing_fields if f not in fields_to_keep]
+
+        # If working inside a GDB feature class, avoid trying to delete mandatory geometry fields
+        is_gdb_fc = not shapefile.lower().endswith('.shp')
+        if is_gdb_fc:
+            for mandatory in ("Shape_Length", "Shape_Area"):
+                if mandatory in fields_to_delete:
+                    fields_to_delete.remove(mandatory)
         
         # SECURITY CHECK: at least one attribute field
         remaining_data_fields = [f for f in existing_fields if f not in fields_to_delete and f not in system_fields]
@@ -2938,9 +2982,7 @@ class CARGProcessor:
             self.combine_geology_lines_optimized()
             log_to_file("Geology lines combination completed")
             
-            # Apply field standardization to all remaining files
-            self._standardize_all_output_files()
-            log_to_file("Field standardization completed")
+            # Field standardization already applied per-layer and post-append; skipping global pass to save time
             
             # Final cleanup
             self.final_cleanup_optimized()

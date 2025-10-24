@@ -1,4 +1,4 @@
-"""
+﻿"""
 CARG Data Conversion Script - ArcGIS Pro Version
 Converts geological data from CARG coded GeoPackage to shapefiles
 
@@ -24,6 +24,7 @@ from collections import defaultdict
 
 # Configure ArcPy environment
 arcpy.env.overwriteOutput = True
+arcpy.env.parallelProcessingFactor = "100%"
 
 class CARGProcessor:
     """
@@ -624,7 +625,7 @@ class CARGProcessor:
                 return "LONG", None
         
         # Default: text field
-        return "TEXT", 255
+        return "TEXT", 254
 
     def validate_inputs(self):
         """Validate input parameters with enhanced checks"""
@@ -698,11 +699,12 @@ class CARGProcessor:
                 raise RuntimeError(f"Failed to create directory {folder}: {str(e)}")
 
         # Create temporary File Geodatabase to avoid shapefile field-type limits in intermediate steps
-        self.temp_gdb = os.path.join(self.workspace, "temp.gdb")
+        scratch_folder = getattr(arcpy.env, 'scratchFolder', None) or self.workspace
+        self.temp_gdb = os.path.join(scratch_folder, "carg_temp.gdb")
         try:
             if arcpy.Exists(self.temp_gdb):
                 arcpy.Delete_management(self.temp_gdb)
-            arcpy.CreateFileGDB_management(self.workspace, "temp.gdb")
+            arcpy.CreateFileGDB_management(scratch_folder, os.path.basename(self.temp_gdb))
             arcpy.AddMessage(f"Created temporary GDB: {self.temp_gdb}")
         except Exception as e:
             raise RuntimeError(f"Failed to create temporary GDB {self.temp_gdb}: {str(e)}")
@@ -865,7 +867,7 @@ class CARGProcessor:
         # Create field if it doesn't exist
         existing_fields = {f.name.upper(): f.name for f in arcpy.ListFields(shapefile)}
         if field_name.upper() not in existing_fields:
-            arcpy.AddField_management(shapefile, field_name, "TEXT", field_length=255)
+            arcpy.AddField_management(shapefile, field_name, "TEXT", field_length=254)
         
         # Apply mapping with optimized cursor
         stats = {"mapped": 0, "total": 0, "unmapped_samples": set()}
@@ -1028,7 +1030,7 @@ class CARGProcessor:
             existing_fields = {f.name.upper(): f.name for f in arcpy.ListFields(shapefile)}
             
             if "FASE_TXT" not in existing_fields:
-                arcpy.AddField_management(shapefile, "Fase_txt", "TEXT", field_length=255)
+                arcpy.AddField_management(shapefile, "Fase_txt", "TEXT", field_length=254)
                 arcpy.AddMessage("'Fase_txt' created")
             
             # Set all Fase_txt values to "non applicabile"
@@ -1060,8 +1062,8 @@ class CARGProcessor:
             
             # Add required fields
             fields_to_add = {
-                "Affior_txt": ("TEXT", 255),
-                "Cont_txt": ("TEXT", 255)
+                "Affior_txt": ("TEXT", 254),
+                "Cont_txt": ("TEXT", 254)
             }
             
             for field_name, (field_type, length) in fields_to_add.items():
@@ -1147,15 +1149,15 @@ class CARGProcessor:
     def _add_geology_fields(self, shapefile):
         """Add all required fields for geology polygons in batch"""
         fields_to_add = {
-            "Tipo_UQ": ("TEXT", 255), "TempTIPO": ("TEXT", 50), 
-            "Stato_UQ": ("TEXT", 255), "TempSTATO": ("TEXT", 50),
-            "ETA_super": ("TEXT", 255), "TMP_super": ("TEXT", 50), 
-            "ETA_infer": ("TEXT", 255), "TMP_infer": ("TEXT", 50),
-            "tipo_ug": ("TEXT", 255), "Temp_UnGeo": ("TEXT", 50), 
-            "Tessitura": ("TEXT", 255), "TempTESS": ("TEXT", 50),
-            "Sommerso_": ("TEXT", 10), "Sigla1": ("TEXT", 255), 
-            "Sigla_ug": ("TEXT", 255), "Nome": ("TEXT", 255), 
-            "Legenda": ("TEXT", 255)
+            "Tipo_UQ": ("TEXT", 254), "TempTIPO": ("TEXT", 50), 
+            "Stato_UQ": ("TEXT", 254), "TempSTATO": ("TEXT", 50),
+            "ETA_super": ("TEXT", 254), "TMP_super": ("TEXT", 50), 
+            "ETA_infer": ("TEXT", 254), "TMP_infer": ("TEXT", 50),
+            "tipo_ug": ("TEXT", 254), "Temp_UnGeo": ("TEXT", 50), 
+            "Tessitura": ("TEXT", 254), "TempTESS": ("TEXT", 50),
+            "Sommerso_": ("TEXT", 10), "Sigla1": ("TEXT", 254), 
+            "Sigla_ug": ("TEXT", 254), "Nome": ("TEXT", 254), 
+            "Legenda": ("TEXT", 254)
         }
         
         existing_fields = {f.name for f in arcpy.ListFields(shapefile)}
@@ -1697,7 +1699,7 @@ class CARGProcessor:
         existing_fields = {f.name.upper(): f.name for f in arcpy.ListFields(shapefile)}
         
         if "FOGLIO" not in existing_fields:
-            arcpy.AddField_management(shapefile, "Foglio", "TEXT", field_length=255)
+            arcpy.AddField_management(shapefile, "Foglio", "TEXT", field_length=254)
         
         # Load domain mappings for foglio
         foglio_domain = self.load_domain_mappings("d_foglio.dbf", code_field="N1", desc_field_pattern="N2", is_gpkg_table=False)
