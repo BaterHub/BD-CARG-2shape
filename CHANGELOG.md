@@ -17,3 +17,6 @@ All notable changes to this project will be documented in this file.
 - Domain mapping and field standardization rules.
 - Geometry diagnostics and CSV report.
 
+## v1.0
+- First public release
+- Documentation

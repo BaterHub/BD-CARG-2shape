@@ -243,12 +243,3 @@ self.debug_utf8_issues_in_auxiliary_tables()
 ## Licenza
 
 Questi tool sono sviluppati per ISPRA nell'ambito del progetto CARG (Carta Geologica d'Italia).
-
-## Changelog
-
-### v1.0
-- Prima release pubblica
-- Supporto completo layer CARG standard
-- Ottimizzazioni performance e gestione UTF-8
-- Report qualità geometrie
-- Documentazione completa
