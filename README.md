@@ -1,5 +1,8 @@
 # CARG Data Conversion Tools - gpkg or geoDB to shape
 
+[![Open In Colab (GPKG → Shapefile)](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/BaterHub/BD-CARG-2shape/blob/main/notebooks/BDgpkg2shape_open.ipynb)
+[![Open In Colab (FileGDB → Shapefile)](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/BaterHub/BD-CARG-2shape/blob/main/notebooks/BDgeoDB2shape_open.ipynb)
+
 **Versione**: 2.1  
 **Author**: Patrizio Petricca (patrizio.petricca@isprambiente.it)
 
