@@ -1,7 +1,7 @@
 # CARG Data Conversion Tools - gpkg or geoDB to shape
 
-[![Open In Colab (GPKG → Shapefile)](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/BaterHub/BD-CARG-2shape/blob/main/notebooks/BDgpkg2shape_open.ipynb)
-[![Open In Colab (FileGDB → Shapefile)](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/BaterHub/BD-CARG-2shape/blob/main/notebooks/BDgeoDB2shape_open.ipynb)
+[![Open In Colab (GPKG → Shapefile)](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/BaterHub/BD-CARG-2shape/blob/main/notebooks/Colab_GPKG_min.ipynb)
+[![Open In Colab (FileGDB → Shapefile)](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/BaterHub/BD-CARG-2shape/blob/main/notebooks/Colab_GDB_min.ipynb)
 
 **Versione**: 2.1  
 **Author**: Patrizio Petricca (patrizio.petricca@isprambiente.it)
@@ -268,15 +268,17 @@ Note
 
 ## Esecuzione su Google Colab (Open‑libs)
 
-Apri e lancia i notebook pronti per Colab (GeoPandas/Fiona/Shapely/pyproj/dbfread):
+Apri e lancia i notebook minimali per Colab (GeoPandas/Fiona/Shapely/pyproj/dbfread):
 
-- GPKG → Shapefile: https://colab.research.google.com/github/BaterHub/BD-CARG-2shape/blob/main/notebooks/BDgpkg2shape_open.ipynb
-- FileGDB → Shapefile: https://colab.research.google.com/github/BaterHub/BD-CARG-2shape/blob/main/notebooks/BDgeoDB2shape_open.ipynb
+- GPKG → Shapefile: https://colab.research.google.com/github/BaterHub/BD-CARG-2shape/blob/main/notebooks/Colab_GPKG_min.ipynb
+- FileGDB → Shapefile: https://colab.research.google.com/github/BaterHub/BD-CARG-2shape/blob/main/notebooks/Colab_GDB_min.ipynb
 
 Istruzioni rapide:
-- Esegui la cella di installazione dipendenze (pip install)
-- Carica i file: .gpkg oppure .gdb.zip e domini.zip (con i .dbf)
-- Esegui la cella di processing; alla fine scarica `output.zip`
+- Cella 1: carica spazio di lavoro (clona repo)
+- Cella 2: installa dipendenze (pip)
+- Cella 3: carica file (.gpkg oppure .gdb.zip) e domini.zip
+- Cella 4: esegui conversione (openlibs pipeline)
+- Cella 5: scarica `output.zip`
 
 - **Patrizio Petricca** - Sviluppo iniziale e manutenzione
 
