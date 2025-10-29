@@ -236,33 +236,6 @@ self.debug_utf8_issues_in_auxiliary_tables()
 - Normale in alcuni contesti ArcGIS, non compromette il risultato finale
 - I campi vengono processati individualmente come fallback
 
-## Contributori
-
-## Uso con QGIS (PyQGIS)
-
-Gli script PyQGIS prototipo permettono di usare la stessa procedura direttamente dentro QGIS.
-
-- Per GeoPackage (.gpkg): `script/BDgpkg2shapeQGIS.py`
-- Per FileGDB (.gdb): `script/BDgeoDB2shapeQGIS.py`
-
-Esempio da Console Python di QGIS:
-
-```python
-# Per .gpkg
-from script.BDgpkg2shapeQGIS import run
-run(r"C:\path\to\your\data.gpkg")
-
-# Per .gdb
-from script.BDgeoDB2shapeQGIS import run
-run(r"C:\path\to\your\data.gdb")
-```
-
-Note
-- Richiede QGIS con modulo Processing attivo.
-- La cartella `domini/` deve essere presente accanto al file di input con i .dbf elencati sopra.
-- Gli shapefile vengono scritti in `output/`; se non scrivibile (es. lock OneDrive) viene usata `output_YYYYMMDD_HHMMSS`.
-- Le pieghe (ST021Polyline) vengono appese automaticamente a `geologia_linee.shp`.
-
 ## Esecuzione su Google Colab (Open‑libs) - Prototipale
 
 Apri e lancia i notebook minimali per Colab (GeoPandas/Fiona/Shapely/pyproj/dbfread):
