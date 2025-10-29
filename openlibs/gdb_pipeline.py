@@ -92,29 +92,37 @@ def process_gdb(gdb_path, domini_dir=None, output_dir=None):
     configs = {
         'ST010Point': {'search':['ST010Point','main.ST010Point','main/ST010Point'], 'output':'geomorfologia_punti.shp',
                        'fields': {'Pun_Gmo':'Pun_Gmo','Tipo':'Tipo_Gmrf','Tipologia':'Tipologia','Stato':'Stato','Direzio':'Direzione'},
-                       'domains': {'Tipo_Gmrf': ('d_10_tipo.dbf','Tipo_G_txt'),'Tipologia':('d_tipologia.dbf','Tipol_txt'),'Stato':('d_stato.dbf','Stato_txt')}},
+                       'domains': {'Tipo_Gmrf': ('d_10_tipo.dbf','Tipo_G_txt'),'Tipologia':('d_tipologia.dbf','Tipol_txt'),'Stato':('d_stato.dbf','Stato_txt')},
+                       'keep': ['Pun_Gmo','Foglio','Tipo_G_txt','Stato_txt','Tipol_txt','Direzione']},
         'ST011Polygon': {'search':['ST011Polygon','main.ST011Polygon','main/ST011Polygon'], 'output':'geomorfologia_poligoni.shp',
                          'fields': {'Pol_Gmo':'Pol_Gmo','Tipo':'Tipo_Gmrf','Tipologia':'Tipologia','Stato':'Stato','Direzio':'Direzione'},
-                         'domains': {'Tipo_Gmrf': ('d_11_tipo.dbf','Tipo_G_txt'),'Tipologia':('d_tipologia.dbf','Tipol_txt'),'Stato':('d_stato.dbf','Stato_txt')}},
+                         'domains': {'Tipo_Gmrf': ('d_11_tipo.dbf','Tipo_G_txt'),'Tipologia':('d_tipologia.dbf','Tipol_txt'),'Stato':('d_stato.dbf','Stato_txt')},
+                         'keep': ['Pol_Gmo','Foglio','Tipo_G_txt','Stato_txt','Tipol_txt','Direzione']},
         'ST012Polyline': {'search':['ST012Polyline','main.ST012Polyline','main/ST012Polyline'], 'output':'geomorfologia_linee.shp',
                           'fields': {'Lin_Gmo':'Lin_Gmo','Label':'Label','Tipo':'Tipo_Gmrf','Tipologia':'Tipologia','Stato':'Stato'},
-                          'domains': {'Tipo_Gmrf': ('d_12_tipo.dbf','Tipo_G_txt'),'Tipologia':('d_tipologia.dbf','Tipol_txt'),'Stato':('d_stato.dbf','Stato_txt')}},
+                          'domains': {'Tipo_Gmrf': ('d_12_tipo.dbf','Tipo_G_txt'),'Tipologia':('d_tipologia.dbf','Tipol_txt'),'Stato':('d_stato.dbf','Stato_txt')},
+                          'keep': ['Lin_Gmo','Label','Foglio','Tipo_G_txt','Stato_txt','Tipol_txt']},
         'ST013Point': {'search':['ST013Point','main.ST013Point','main/ST013Point'], 'output':'risorse_prospezioni.shp',
                        'fields': {'Num_Ris':'Num_Ris','Label1':'Label1','Label2':'Label2','Label3':'Label3','TIPO':'Tipo'},
-                       'domains': {'Tipo': ('d_13_tipo.dbf','Tipo_txt')}},
+                       'domains': {'Tipo': ('d_13_tipo.dbf','Tipo_txt')},
+                       'keep': ['Num_Ris','Label1','Label2','Label3','Foglio','Tipo_txt']},
         'ST018Polyline': {'search':['ST018Polyline','main.ST018Polyline','main/ST018Polyline'], 'output':'geologia_linee.shp',
                           'fields': {'Tipo':'Tipo_geo','Tipologia':'Tipologia','Contorno':'Contorno','Affiora':'Affiora','Direzio':'Direzione'},
                           'domains': {'Tipo_geo': ('d_st018_line.dbf','Tipo_g_txt'),'Tipologia':('d_tipologia.dbf','Tipol_txt'),'Contorno':('d_st018_contorno.dbf','Cont_txt'),'Affiora':('d_st018_affiora.dbf','Affior_txt')},
-                          'extra_fixed': {'Fase_txt':'non applicabile/non classificabile'}},
+                          'extra_fixed': {'Fase_txt':'non applicabile/non classificabile'},
+                          'keep': ['Foglio','Fase_txt','Affior_txt','Tipo_g_txt','Cont_txt','Tipol_txt','Direzione']},
         'ST018Polygon': {'search':['ST018Polygon','main.ST018Polygon','main/ST018Polygon'], 'output':'geologia_poligoni.shp',
-                         'fields': {'Pol_Uc':'Pol_Uc','Uc_Lege':'Uc_Lege','Direzio':'Direzione'}, 'domains': {}},
+                         'fields': {'Pol_Uc':'Pol_Uc','Uc_Lege':'Uc_Lege','Direzio':'Direzione','UQ_CAR':'UQ_CAR','UC_LEGE':'UC_LEGE','ID_TESS':'ID_TESS','SOMMERSO':'SOMMERSO'}, 'domains': {},
+                         'keep': ['Pol_Uc','Uc_Lege','Foglio','Direzione','Tipo_UQ','Stato_UQ','ETA_super','ETA_infer','tipo_ug','Tessitura','Sigla1','Sigla_ug','Nome','Legenda','Sommerso_']},
         'ST019Point': {'search':['ST019Point','main.ST019Point','main/ST019Point'], 'output':'geologia_punti.shp',
                        'fields': {'Num_Oss':'Num_Oss','Quota':'Quota','Inclina':'Inclinaz','Immersio':'Immersione','Direzio':'Direzione','Tipo':'Tipo_geo','Tipologia':'Tipologia','Fase':'Fase','Verso':'Verso','Asimmetria':'Asimmetria'},
-                       'domains': {'Tipo_geo': ('d_19_tipo.dbf','Tipo_G_txt'),'Tipologia':('d_tipologia.dbf','Tipol_txt'),'Fase':('d_fase.dbf','Fase_txt'),'Verso':('d_verso.dbf','Verso_txt'),'Asimmetria':('d_asimmetria.dbf','Asimm_txt')}},
+                       'domains': {'Tipo_geo': ('d_19_tipo.dbf','Tipo_G_txt'),'Tipologia':('d_tipologia.dbf','Tipol_txt'),'Fase':('d_fase.dbf','Fase_txt'),'Verso':('d_verso.dbf','Verso_txt'),'Asimmetria':('d_asimmetria.dbf','Asimm_txt')},
+                       'keep': ['Num_Oss','Quota','Inclinaz','Immersione','Direzione','Tipo_G_txt','Tipol_txt','Fase_txt','Verso_txt','Asimm_txt','Foglio']},
         'ST021Polyline': {'search':['ST021Polyline','main.ST021Polyline','main/ST021Polyline'], 'output':'geologia_linee_pieghe.shp',
                           'fields': {'Tipo':'Tipo_geo','Tipologia':'Tipologia','Fase':'Fase','Direzio':'Direzione'},
                           'domains': {'Tipo_geo': ('d_st021.dbf','Tipo_g_txt'),'Tipologia':('d_tipologia.dbf','Tipol_txt'),'Fase':('d_fase.dbf','Fase_txt')},
-                          'extra_fixed': {'Affior_txt':'non applicabile','Cont_txt':'no'}},
+                          'extra_fixed': {'Affior_txt':'non applicabile','Cont_txt':'no'},
+                          'keep': ['Foglio','Fase_txt','Affior_txt','Tipo_g_txt','Cont_txt','Tipol_txt','Direzione']},
     }
 
     def find_layer(name_variants):
@@ -126,6 +134,19 @@ def process_gdb(gdb_path, domini_dir=None, output_dir=None):
                 if nv.lower() in L.lower():
                     return L
         return None
+
+    def _standardize_and_save(gdf, out_path, keep_fields=None):
+        keep_fields = keep_fields or []
+        for c in keep_fields:
+            if c not in gdf.columns and c != 'geometry':
+                gdf[c] = ''
+        cols = [c for c in keep_fields if c in gdf.columns]
+        cols += [c for c in gdf.columns if c not in cols and c != 'geometry']
+        gdf = gdf[cols + (['geometry'] if 'geometry' in gdf.columns else [])]
+        for c in gdf.columns:
+            if c != 'geometry' and gdf[c].dtype == object:
+                gdf[c] = gdf[c].astype(str).str.slice(0,254)
+        gdf.to_file(out_path, driver='ESRI Shapefile', encoding='utf-8')
 
     def process_one(cfg):
         ln = find_layer(cfg['search'])
@@ -144,14 +165,83 @@ def process_gdb(gdb_path, domini_dir=None, output_dir=None):
             if mapped_src in out.columns:
                 out = _apply_domain(out, mapped_src, target, dom)
         g_out = gpd.GeoDataFrame(out, geometry=g.geometry, crs=g.crs)
-        g_out = _ensure_text_len(g_out, [c for c in g_out.columns if c != 'geometry'])
-        g_out.to_file(os.path.join(output_dir, cfg['output']), driver='ESRI Shapefile', encoding='utf-8')
+        _standardize_and_save(g_out, os.path.join(output_dir, cfg['output']), keep_fields=cfg.get('keep'))
         return True
 
     processed = 0
-    for _, cfg in configs.items():
+    for k, cfg in configs.items():
+        if k == 'ST018Polygon':
+            continue
         if process_one(cfg):
             processed += 1
+
+    # ST018Polygon special joins
+    pol_cfg = configs['ST018Polygon']
+    ln = find_layer(pol_cfg['search'])
+    if ln:
+        gp = gpd.read_file(gdb_path, layer=ln)
+        df = pd.DataFrame(index=gp.index)
+        for src, dst in pol_cfg['fields'].items():
+            df[dst] = gp[src] if src in gp.columns else ''
+        df['Foglio'] = foglio_txt
+        if 'Direzione' not in df.columns and 'Direzio' in gp.columns:
+            df['Direzione'] = gp['Direzio']
+        if 'SOMMERSO' in gp.columns:
+            def _som(v):
+                if str(v) in ('1','1.0') or v == 1: return 'SI'
+                if str(v) in ('2','2.0') or v == 2: return 'NO'
+                return ''
+            df['Sommerso_'] = gp['SOMMERSO'].apply(_som)
+        else:
+            df['Sommerso_'] = ''
+        def _find_aux(target):
+            for name in layers:
+                if target.lower() in name.lower():
+                    return name
+            return None
+        name_t1000 = _find_aux('T0180801000')
+        if name_t1000:
+            t1000 = gpd.read_file(gdb_path, layer=name_t1000)
+            cols = [c for c in ['Uq_Car','Tipo','Stato'] if c in t1000.columns]
+            t1000 = t1000[cols]
+            if 'UQ_CAR' in df.columns and 'Uq_Car' in t1000.columns:
+                df = df.join(t1000.set_index('Uq_Car'), on='UQ_CAR')
+            dom_tipo = _load_domain_dbf(os.path.join(domini_dir,'d_1000_tipo.dbf'))
+            dom_stato= _load_domain_dbf(os.path.join(domini_dir,'d_stato.dbf'))
+            if 'Tipo' in df.columns: df = _apply_domain(df, 'Tipo', 'Tipo_UQ', dom_tipo)
+            if 'Stato' in df.columns: df = _apply_domain(df, 'Stato', 'Stato_UQ', dom_stato)
+        else:
+            df['Tipo_UQ'] = ''
+            df['Stato_UQ'] = ''
+        name_t2000 = _find_aux('T0180802000')
+        if name_t2000:
+            t2000 = gpd.read_file(gdb_path, layer=name_t2000)
+            cols = [c for c in ['Uc_Lege','Eta_Sup','Eta_Inf','S1_Tipo','Sigla1','Sigla_Carta','Nome','Legenda'] if c in t2000.columns]
+            t2000 = t2000[cols]
+            if 'UC_LEGE' in df.columns and 'Uc_Lege' in t2000.columns:
+                df = df.join(t2000.set_index('Uc_Lege'), on='UC_LEGE')
+            dom_eta = _load_domain_dbf(os.path.join(domini_dir,'d_t2000_eta.dbf'))
+            dom_s1  = _load_domain_dbf(os.path.join(domini_dir,'d_2000_SiglaTipo.dbf'))
+            if 'Eta_Sup' in df.columns: df = _apply_domain(df, 'Eta_Sup', 'ETA_super', dom_eta)
+            if 'Eta_Inf' in df.columns: df = _apply_domain(df, 'Eta_Inf', 'ETA_infer', dom_eta)
+            if 'S1_Tipo' in df.columns: df = _apply_domain(df, 'S1_Tipo', 'tipo_ug', dom_s1)
+            for c_src, c_dst in [('Sigla1','Sigla1'),('Sigla1','Sigla_ug'),('Nome','Nome'),('Legenda','Legenda')]:
+                if c_src in df.columns: df[c_dst] = df[c_src]
+        else:
+            for c in ['ETA_super','ETA_infer','tipo_ug','Sigla1','Sigla_ug','Nome','Legenda']:
+                if c not in df.columns: df[c] = ''
+        name_t3000 = _find_aux('T0180803000')
+        if name_t3000:
+            t3000 = gpd.read_file(gdb_path, layer=name_t3000)
+            cols = [c for c in ['Id_Tess','Tessitura'] if c in t3000.columns]
+            t3000 = t3000[cols]
+            if 'ID_TESS' in df.columns and 'Id_Tess' in t3000.columns:
+                df = df.join(t3000.set_index('Id_Tess'), on='ID_TESS')
+        else:
+            if 'Tessitura' not in df.columns: df['Tessitura'] = ''
+        g_out = gpd.GeoDataFrame(df, geometry=gp.geometry, crs=gp.crs)
+        _standardize_and_save(g_out, os.path.join(output_dir, pol_cfg['output']), keep_fields=pol_cfg.get('keep'))
+        processed += 1
 
     # Append folds
     pieghe = os.path.join(output_dir, 'geologia_linee_pieghe.shp')
@@ -167,4 +257,3 @@ def process_gdb(gdb_path, domini_dir=None, output_dir=None):
             pass
 
     return output_dir, processed
-
