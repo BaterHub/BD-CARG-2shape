@@ -164,8 +164,23 @@ def process_gdb(gdb_path, domini_dir=None, output_dir=None):
             mapped_src = cfg['fields'].get(src, src)
             if mapped_src in out.columns:
                 out = _apply_domain(out, mapped_src, target, dom)
+        # Final renames per output
+        final_rename = {}
+        out_name = cfg['output']
+        if out_name == 'geomorfologia_punti.shp':
+            final_rename = {'Tipo_G_txt':'Tipo_Gmrf','Tipol_txt':'Tipologia','Stato_txt':'Stato'}
+        elif out_name == 'geomorfologia_linee.shp':
+            final_rename = {'Tipo_G_txt':'Tipo_Gmrf','Tipol_txt':'Tipologia','Stato_txt':'Stato'}
+        elif out_name == 'geomorfologia_poligoni.shp':
+            final_rename = {'Tipo_G_txt':'Tipo_Gmrf','Tipol_txt':'Tipologia','Stato_txt':'Stato'}
+        elif out_name == 'risorse_prospezioni.shp':
+            final_rename = {'Tipo_txt':'Tipo'}
+        elif out_name in ('geologia_linee.shp','geologia_linee_pieghe.shp'):
+            final_rename = {'Tipo_g_txt':'Tipo_Geo','Tipol_txt':'Tipologia','Cont_txt':'Contorno','Affior_txt':'Affiora','Fase_txt':'Fase'}
+        elif out_name == 'geologia_punti.shp':
+            final_rename = {'Tipo_G_txt':'Tipo_Geo','Tipol_txt':'Tipologia','Fase_txt':'Fase','Verso_txt':'Verso','Asimm_txt':'Asimmetria'}
         g_out = gpd.GeoDataFrame(out, geometry=g.geometry, crs=g.crs)
-        _standardize_and_save(g_out, os.path.join(output_dir, cfg['output']), keep_fields=cfg.get('keep'))
+        _standardize_and_save(g_out, os.path.join(output_dir, cfg['output']), keep_fields=cfg.get('keep'), final_rename=final_rename)
         return True
 
     processed = 0
@@ -239,8 +254,9 @@ def process_gdb(gdb_path, domini_dir=None, output_dir=None):
                 df = df.join(t3000.set_index('Id_Tess'), on='ID_TESS')
         else:
             if 'Tessitura' not in df.columns: df['Tessitura'] = ''
+        rename_map = {'ETA_Sup':'ETA_Super','Eta_Sup':'ETA_Super','ETA_Inf':'ETA_Infer','Eta_Inf':'ETA_Infer','tipo_ug':'Tipo_UG','Sigla_ug':'Sigla_UG','Sommerso_':'Sommerso'}
         g_out = gpd.GeoDataFrame(df, geometry=gp.geometry, crs=gp.crs)
-        _standardize_and_save(g_out, os.path.join(output_dir, pol_cfg['output']), keep_fields=pol_cfg.get('keep'))
+        _standardize_and_save(g_out, os.path.join(output_dir, pol_cfg['output']), keep_fields=pol_cfg.get('keep'), final_rename=rename_map)
         processed += 1
 
     # Append folds

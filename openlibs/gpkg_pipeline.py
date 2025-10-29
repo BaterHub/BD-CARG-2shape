@@ -107,7 +107,7 @@ def process_gpkg(gpkg_path, domini_dir=None, output_dir=None):
                 'Tipologia': ('d_tipologia.dbf','Tipol_txt'),
                 'Stato': ('d_stato.dbf','Stato_txt'),
             },
-            'keep': ['Pun_Gmo','Foglio','Tipo_G_txt','Stato_txt','Tipol_txt','Direzione']
+            'keep': ['Pun_Gmo','Foglio','Tipo_Gmrf','Stato','Tipologia','Direzione']
         },
         'ST011Polygon': {
             'search': ['ST011Polygon','main.ST011Polygon'],
@@ -118,7 +118,7 @@ def process_gpkg(gpkg_path, domini_dir=None, output_dir=None):
                 'Tipologia': ('d_tipologia.dbf','Tipol_txt'),
                 'Stato': ('d_stato.dbf','Stato_txt'),
             },
-            'keep': ['Pol_Gmo','Foglio','Tipo_G_txt','Stato_txt','Tipol_txt','Direzione']
+            'keep': ['Pol_Gmo','Foglio','Tipo_Gmrf','Stato','Tipologia','Direzione']
         },
         'ST012Polyline': {
             'search': ['ST012Polyline','main.ST012Polyline'],
@@ -129,14 +129,14 @@ def process_gpkg(gpkg_path, domini_dir=None, output_dir=None):
                 'Tipologia': ('d_tipologia.dbf','Tipol_txt'),
                 'Stato': ('d_stato.dbf','Stato_txt'),
             },
-            'keep': ['Lin_Gmo','Label','Foglio','Tipo_G_txt','Stato_txt','Tipol_txt']
+            'keep': ['Lin_Gmo','Label','Foglio','Tipo_Gmrf','Stato','Tipologia']
         },
         'ST013Point': {
             'search': ['ST013Point','main.ST013Point'],
             'output': 'risorse_prospezioni.shp',
             'fields': {'Num_Ris':'Num_Ris','Label1':'Label1','Label2':'Label2','Label3':'Label3','TIPO':'Tipo'},
             'domains': {'Tipo': ('d_13_tipo.dbf','Tipo_txt')},
-            'keep': ['Num_Ris','Label1','Label2','Label3','Foglio','Tipo_txt']
+            'keep': ['Num_Ris','Label1','Label2','Label3','Foglio','Tipo']
         },
         'ST018Polyline': {
             'search': ['ST018Polyline','main.ST018Polyline'],
@@ -144,21 +144,21 @@ def process_gpkg(gpkg_path, domini_dir=None, output_dir=None):
             'fields': {'Tipo':'Tipo_geo','Tipologia':'Tipologia','Contorno':'Contorno','Affiora':'Affiora','Direzio':'Direzione'},
             'domains': {'Tipo_geo': ('d_st018_line.dbf','Tipo_g_txt'),'Tipologia':('d_tipologia.dbf','Tipol_txt'),'Contorno':('d_st018_contorno.dbf','Cont_txt'),'Affiora':('d_st018_affiora.dbf','Affior_txt')},
             'extra_fixed': {'Fase_txt':'non applicabile/non classificabile'},
-            'keep': ['Foglio','Fase_txt','Affior_txt','Tipo_g_txt','Cont_txt','Tipol_txt','Direzione']
+            'keep': ['Foglio','Fase','Affiora','Tipo_Geo','Contorno','Tipologia','Direzione']
         },
         'ST018Polygon': {
             'search': ['ST018Polygon','main.ST018Polygon'],
             'output': 'geologia_poligoni.shp',
             'fields': {'Pol_Uc':'Pol_Uc','Uc_Lege':'Uc_Lege','Direzio':'Direzione','UQ_CAR':'UQ_CAR','UC_LEGE':'UC_LEGE','ID_TESS':'ID_TESS','SOMMERSO':'SOMMERSO'},
             'domains': {},
-            'keep': ['Pol_Uc','Uc_Lege','Foglio','Direzione','Tipo_UQ','Stato_UQ','ETA_super','ETA_infer','tipo_ug','Tessitura','Sigla1','Sigla_ug','Nome','Legenda','Sommerso_']
+            'keep': ['Pol_Uc','Uc_Lege','Foglio','Direzione','Tipo_UQ','Stato_UQ','ETA_Super','ETA_Infer','Tipo_UG','Tessitura','Sigla1','Sigla_UG','Nome','Legenda','Sommerso']
         },
         'ST019Point': {
             'search': ['ST019Point','main.ST019Point'],
             'output': 'geologia_punti.shp',
             'fields': {'Num_Oss':'Num_Oss','Quota':'Quota','Inclina':'Inclinaz','Immersio':'Immersione','Direzio':'Direzione','Tipo':'Tipo_geo','Tipologia':'Tipologia','Fase':'Fase','Verso':'Verso','Asimmetria':'Asimmetria'},
             'domains': {'Tipo_geo': ('d_19_tipo.dbf','Tipo_G_txt'),'Tipologia':('d_tipologia.dbf','Tipol_txt'),'Fase':('d_fase.dbf','Fase_txt'),'Verso':('d_verso.dbf','Verso_txt'),'Asimmetria':('d_asimmetria.dbf','Asimm_txt')},
-            'keep': ['Num_Oss','Quota','Inclinaz','Immersione','Direzione','Tipo_G_txt','Tipol_txt','Fase_txt','Verso_txt','Asimm_txt','Foglio']
+            'keep': ['Num_Oss','Quota','Inclinaz','Immersione','Direzione','Tipo_Geo','Tipologia','Fase','Verso','Asimmetria','Foglio']
         },
         'ST021Polyline': {
             'search': ['ST021Polyline','main.ST021Polyline'],
@@ -166,7 +166,7 @@ def process_gpkg(gpkg_path, domini_dir=None, output_dir=None):
             'fields': {'Tipo':'Tipo_geo','Tipologia':'Tipologia','Fase':'Fase','Direzio':'Direzione'},
             'domains': {'Tipo_geo': ('d_st021.dbf','Tipo_g_txt'),'Tipologia':('d_tipologia.dbf','Tipol_txt'),'Fase':('d_fase.dbf','Fase_txt')},
             'extra_fixed': {'Affior_txt':'non applicabile','Cont_txt':'no'},
-            'keep': ['Foglio','Fase_txt','Affior_txt','Tipo_g_txt','Cont_txt','Tipol_txt','Direzione']
+            'keep': ['Foglio','Fase','Affiora','Tipo_Geo','Contorno','Tipologia','Direzione']
         },
     }
 
@@ -180,12 +180,15 @@ def process_gpkg(gpkg_path, domini_dir=None, output_dir=None):
                     return L
         return None
 
-    def _standardize_and_save(gdf, out_path, keep_fields=None):
+    def _standardize_and_save(gdf, out_path, keep_fields=None, final_rename=None):
         # Ensure columns exist
         keep_fields = keep_fields or []
         for c in keep_fields:
             if c not in gdf.columns and c != 'geometry':
                 gdf[c] = ''
+        # Apply final renames before ordering
+        if final_rename:
+            gdf = gdf.rename(columns=final_rename)
         # Order columns: keep_fields first (when present)
         cols = [c for c in keep_fields if c in gdf.columns]
         # Append remaining non-geometry columns
@@ -214,8 +217,23 @@ def process_gpkg(gpkg_path, domini_dir=None, output_dir=None):
             mapped_src = cfg['fields'].get(src, src)
             if mapped_src in out.columns:
                 out = _apply_domain(out, mapped_src, target, dom)
+        # Final renames per output
+        final_rename = {}
+        out_name = cfg['output']
+        if out_name == 'geomorfologia_punti.shp':
+            final_rename = {'Tipo_G_txt':'Tipo_Gmrf','Tipol_txt':'Tipologia','Stato_txt':'Stato'}
+        elif out_name == 'geomorfologia_linee.shp':
+            final_rename = {'Tipo_G_txt':'Tipo_Gmrf','Tipol_txt':'Tipologia','Stato_txt':'Stato'}
+        elif out_name == 'geomorfologia_poligoni.shp':
+            final_rename = {'Tipo_G_txt':'Tipo_Gmrf','Tipol_txt':'Tipologia','Stato_txt':'Stato'}
+        elif out_name == 'risorse_prospezioni.shp':
+            final_rename = {'Tipo_txt':'Tipo'}
+        elif out_name in ('geologia_linee.shp','geologia_linee_pieghe.shp'):
+            final_rename = {'Tipo_g_txt':'Tipo_Geo','Tipol_txt':'Tipologia','Cont_txt':'Contorno','Affior_txt':'Affiora','Fase_txt':'Fase'}
+        elif out_name == 'geologia_punti.shp':
+            final_rename = {'Tipo_G_txt':'Tipo_Geo','Tipol_txt':'Tipologia','Fase_txt':'Fase','Verso_txt':'Verso','Asimm_txt':'Asimmetria'}
         g_out = gpd.GeoDataFrame(out, geometry=g.geometry, crs=g.crs)
-        _standardize_and_save(g_out, os.path.join(output_dir, cfg['output']), keep_fields=cfg.get('keep'))
+        _standardize_and_save(g_out, os.path.join(output_dir, cfg['output']), keep_fields=cfg.get('keep'), final_rename=final_rename)
         return True
 
     processed = 0
@@ -288,9 +306,10 @@ def process_gpkg(gpkg_path, domini_dir=None, output_dir=None):
             # dom_tess = _load_domain_dbf(os.path.join(domini_dir,'d_t3000.dbf'))
         else:
             if 'Tessitura' not in df.columns: df['Tessitura'] = ''
-        # Build GeoDataFrame and save
+        # Final renames for polygons
+        rename_map = {'ETA_super':'ETA_Super','ETA_infer':'ETA_Infer','tipo_ug':'Tipo_UG','Sigla_ug':'Sigla_UG','Sommerso_':'Sommerso'}
         g_out = gpd.GeoDataFrame(df, geometry=gp.geometry, crs=gp.crs)
-        _standardize_and_save(g_out, os.path.join(output_dir, pol_cfg['output']), keep_fields=pol_cfg.get('keep'))
+        _standardize_and_save(g_out, os.path.join(output_dir, pol_cfg['output']), keep_fields=pol_cfg.get('keep'), final_rename=rename_map)
         processed += 1
 
     # Append folds
