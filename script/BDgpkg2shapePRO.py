@@ -1,4 +1,4 @@
-﻿"""
+"""
 CARG Data Conversion Script - ArcGIS Pro Version
 Converts geological data from CARG coded GeoPackage to shapefiles
 
@@ -705,7 +705,8 @@ class CARGProcessor:
                 if attempt < max_attempts - 1:
                     arcpy.AddWarning(f"Attempt {attempt + 1} failed to remove {directory_path}: {str(e)}")
                 else:
-                    arcpy.AddError(f"Failed to remove directory after {max_attempts} attempts: {directory_path}")
+                    # Do not mark the tool as failed for cleanup issues
+                    arcpy.AddWarning(f"Failed to remove directory after {max_attempts} attempts: {directory_path}")
         
         return False
 
@@ -713,17 +714,35 @@ class CARGProcessor:
         """Setup workspace directories"""
         self.cleanup_resources()
         
-        directories = [self.workspace_shape, self.workspace_output]
+        # Only ensure output directory; intermediates live in temp GDB
+        desired_output = self.workspace_output
         
-        for folder in directories:
-            if not self.safe_remove_directory(folder):
-                raise RuntimeError(f"Cannot proceed due to directory cleanup failure: {folder}")
-            
+        if not self.safe_remove_directory(desired_output):
+            arcpy.AddWarning(f"Output directory cleanup failed; attempting to proceed without deletion: {desired_output}")
+            # Try to test write access; if not possible, fallback to a timestamped subfolder
             try:
-                os.makedirs(folder)
-                arcpy.AddMessage(f"Created directory: {folder}")
+                if not os.path.exists(desired_output):
+                    os.makedirs(desired_output)
+                test_path = os.path.join(desired_output, f".write_test_{int(time.time())}")
+                with open(test_path, 'w', encoding='utf-8') as f:
+                    f.write('ok')
+                os.remove(test_path)
+                arcpy.AddMessage(f"Proceeding with existing output directory: {desired_output}")
+            except Exception:
+                ts = time.strftime("%Y%m%d_%H%M%S")
+                fallback_output = os.path.join(self.workspace, f"output_{ts}")
+                try:
+                    os.makedirs(fallback_output)
+                    self.workspace_output = fallback_output
+                    arcpy.AddMessage(f"Using fallback output directory: {fallback_output}")
+                except Exception as e:
+                    raise RuntimeError(f"Failed to create fallback output directory: {str(e)}")
+        else:
+            try:
+                os.makedirs(desired_output)
+                arcpy.AddMessage(f"Created directory: {desired_output}")
             except Exception as e:
-                raise RuntimeError(f"Failed to create directory {folder}: {str(e)}")
+                raise RuntimeError(f"Failed to create directory {desired_output}: {str(e)}")
 
         # Create temporary File Geodatabase to avoid shapefile field-type limits in intermediate steps
         scratch_folder = getattr(arcpy.env, 'scratchFolder', None) or self.workspace
@@ -2051,6 +2070,11 @@ class CARGProcessor:
             processing_time = time.time() - start_time
             arcpy.AddMessage("Processing completed in {:.1f} seconds!".format(processing_time))
             arcpy.AddMessage("Successfully processed: {} | Failed: {}".format(processed_count, failed_count))
+            arcpy.AddMessage(f"Output directory: {self.workspace_output}")
+            try:
+                log_to_file(f"Output directory: {self.workspace_output}")
+            except Exception:
+                pass
             arcpy.AddMessage("SCRIPT COMPLETED SUCCESSFULLY")
             
             # List output files
@@ -2148,11 +2172,7 @@ class CARGProcessor:
             # Verify final outputs
             self._verify_final_outputs_optimized()
             
-            # Clean up temporary directories
-            temp_dirs = [self.workspace_shape]
-            for temp_dir in temp_dirs:
-                if os.path.exists(temp_dir):
-                    self.safe_remove_directory(temp_dir)
+            # No 'shape' directory used anymore; skip deleting it
 
             # Remove temporary GDB
             if hasattr(self, 'temp_gdb') and arcpy.Exists(self.temp_gdb):

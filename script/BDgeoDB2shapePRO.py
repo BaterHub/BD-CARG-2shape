@@ -721,7 +721,8 @@ class CARGProcessor:
                     arcpy.AddWarning("Attempt {} failed to remove {}: {}".format(
                         attempt + 1, directory_path, str(e)))
                 else:
-                    arcpy.AddError("Failed to remove directory after {} attempts: {}".format(
+                    # Do not mark the tool as failed for cleanup issues
+                    arcpy.AddWarning("Failed to remove directory after {} attempts: {}".format(
                         max_attempts, directory_path))
         
         return False
@@ -730,7 +731,8 @@ class CARGProcessor:
         """Setup workspace directories"""
         self.cleanup_resources()
         
-        directories = [self.workspace_shape, self.workspace_output]
+        # Only ensure output directory; intermediates live in temp GDB
+        directories = [self.workspace_output]
         
         for folder in directories:
             if not self.safe_remove_directory(folder):
@@ -3012,6 +3014,12 @@ class CARGProcessor:
             processing_time = time.time() - start_time
             arcpy.AddMessage("Processing completed in {:.1f} seconds!".format(processing_time))
             arcpy.AddMessage("Successfully processed: {} | Failed: {}".format(processed_count, failed_count))
+            arcpy.AddMessage("Output directory: {}".format(self.workspace_output))
+            try:
+                # If file logging helper exists in this scope, use it
+                log_to_file("Output directory: {}".format(self.workspace_output))
+            except Exception:
+                pass
             arcpy.AddMessage("SCRIPT COMPLETED SUCCESSFULLY")
             
             # List output files
@@ -3088,11 +3096,14 @@ class CARGProcessor:
             # Verify final outputs
             self._verify_final_outputs_optimized()
             
-            # Clean up temporary directories
-            temp_dirs = [self.workspace_shape]
-            for temp_dir in temp_dirs:
-                if os.path.exists(temp_dir):
-                    self.safe_remove_directory(temp_dir)
+            # No 'shape' directory used anymore; skip deleting it
+
+            # Remove temporary GDB
+            if hasattr(self, 'temp_gdb') and arcpy.Exists(self.temp_gdb):
+                try:
+                    arcpy.Delete_management(self.temp_gdb)
+                except Exception:
+                    pass
             
             arcpy.AddMessage("Final cleanup completed")
             
