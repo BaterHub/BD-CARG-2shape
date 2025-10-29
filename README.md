@@ -1,8 +1,5 @@
 # CARG Data Conversion Tools - gpkg or geoDB to shape
 
-[![Open In Colab (GPKG → Shapefile)](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/BaterHub/BD-CARG-2shape/blob/main/notebooks/Colab_GPKG_min.ipynb)
-[![Open In Colab (FileGDB → Shapefile)](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/BaterHub/BD-CARG-2shape/blob/main/notebooks/Colab_GDB_min.ipynb)
-
 **Versione**: 2.1  
 **Author**: Patrizio Petricca (patrizio.petricca@isprambiente.it)
 
@@ -266,12 +263,12 @@ Note
 - Gli shapefile vengono scritti in `output/`; se non scrivibile (es. lock OneDrive) viene usata `output_YYYYMMDD_HHMMSS`.
 - Le pieghe (ST021Polyline) vengono appese automaticamente a `geologia_linee.shp`.
 
-## Esecuzione su Google Colab (Open‑libs)
+## Esecuzione su Google Colab (Open‑libs) - Prototipale
 
 Apri e lancia i notebook minimali per Colab (GeoPandas/Fiona/Shapely/pyproj/dbfread):
 
-- GPKG → Shapefile: https://colab.research.google.com/github/BaterHub/BD-CARG-2shape/blob/main/notebooks/Colab_GPKG_min.ipynb
-- FileGDB → Shapefile: https://colab.research.google.com/github/BaterHub/BD-CARG-2shape/blob/main/notebooks/Colab_GDB_min.ipynb
+- GPKG → Shapefile [![Open In Colab (GPKG → Shapefile)](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/BaterHub/BD-CARG-2shape/blob/main/notebooks/Colab_GPKG_min.ipynb)
+- FileGDB → Shapefile [![Open In Colab (FileGDB → Shapefile)](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/BaterHub/BD-CARG-2shape/blob/main/notebooks/Colab_GDB_min.ipynb)
 
 Istruzioni rapide:
 - Cella 1: carica spazio di lavoro (clona repo)
@@ -279,8 +276,6 @@ Istruzioni rapide:
 - Cella 3: carica file (.gpkg oppure .gdb.zip) e domini.zip
 - Cella 4: esegui conversione (openlibs pipeline)
 - Cella 5: scarica `output.zip`
-
-- **Patrizio Petricca** - Sviluppo iniziale e manutenzione
 
 ## Licenza
 
