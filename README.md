@@ -240,7 +240,7 @@ self.debug_utf8_issues_in_auxiliary_tables()
 
 Apri e lancia i notebook minimali per Colab (GeoPandas/Fiona/Shapely/pyproj/dbfread):
 
-- GPKG → Shapefile [![Open In Colab (GPKG → Shapefile)](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/BaterHub/BD-CARG-2shape/blob/main/notebooks/Colab_GPKG_min.ipynb)
+- GPKG → Shapefile    [![Open In Colab (GPKG → Shapefile)](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/BaterHub/BD-CARG-2shape/blob/main/notebooks/Colab_GPKG_min.ipynb)
 - FileGDB → Shapefile [![Open In Colab (FileGDB → Shapefile)](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/BaterHub/BD-CARG-2shape/blob/main/notebooks/Colab_GDB_min.ipynb)
 
 Istruzioni rapide:
