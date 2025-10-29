@@ -12,6 +12,16 @@ All notable changes to this project will be documented in this file.
 - Safer handling of `Direzione` type conversions.
 - Log final output directory in the summary.
 
+### Additions (2025-10-29)
+- Minimal Colab notebooks added:
+  - `notebooks/Colab_GPKG_min.ipynb`
+  - `notebooks/Colab_GDB_min.ipynb`
+  Both clone the repo, install open libs, handle uploads, run conversion (using `openlibs/gpkg_pipeline.py` or `openlibs/gdb_pipeline.py`), and zip results.
+- Open-libs pipelines:
+  - `openlibs/gpkg_pipeline.py`
+  - `openlibs/gdb_pipeline.py`
+  Pure GeoPandas/DBF workflow (no ArcPy/QGIS), used by Colab notebooks.
+
 ## v2.0 (previous)
 - Initial ArcGIS Pro compatibility for GPKG and GeoDB scripts.
 - Domain mapping and field standardization rules.
