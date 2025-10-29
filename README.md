@@ -263,6 +263,18 @@ Note
 - Gli shapefile vengono scritti in `output/`; se non scrivibile (es. lock OneDrive) viene usata `output_YYYYMMDD_HHMMSS`.
 - Le pieghe (ST021Polyline) vengono appese automaticamente a `geologia_linee.shp`.
 
+## Esecuzione su Google Colab (Open‑libs)
+
+Apri e lancia i notebook pronti per Colab (GeoPandas/Fiona/Shapely/pyproj/dbfread):
+
+- GPKG → Shapefile: https://colab.research.google.com/github/BaterHub/BD-CARG-2shape/blob/main/notebooks/BDgpkg2shape_open.ipynb
+- FileGDB → Shapefile: https://colab.research.google.com/github/BaterHub/BD-CARG-2shape/blob/main/notebooks/BDgeoDB2shape_open.ipynb
+
+Istruzioni rapide:
+- Esegui la cella di installazione dipendenze (pip install)
+- Carica i file: .gpkg oppure .gdb.zip e domini.zip (con i .dbf)
+- Esegui la cella di processing; alla fine scarica `output.zip`
+
 - **Patrizio Petricca** - Sviluppo iniziale e manutenzione
 
 ## Licenza
